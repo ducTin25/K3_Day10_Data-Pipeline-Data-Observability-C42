@@ -1,0 +1,9 @@
+{
+  "timestamp": "2026-08-06T04:11:01.782614Z",
+  "source_raw_path": "C:\\Users\\Admin\\Downloads\\CodeLab10\\K3_Day10_Data-Pipeline-Data-Observability-C42\\data\\raw\\crossref_records.json",
+  "repaired_record_count": 24,
+  "corrupted_record_count": 23,
+  "baseline_record_count": 24,
+  "recovery_status": "FULL_RECOVERY",
+  "notes": "Dataset fully reconstructed from trusted raw records snapshot."
+}
