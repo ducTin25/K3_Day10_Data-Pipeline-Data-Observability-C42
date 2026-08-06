@@ -1,0 +1,58 @@
+{
+  "source": "Crossref REST API",
+  "raw_response_path": "D:\\AI20K\\codelabs\\K3_Day10_Data-Pipeline-Data-Observability-C42\\data\\raw\\crossref_response.json",
+  "raw_records_path": "D:\\AI20K\\codelabs\\K3_Day10_Data-Pipeline-Data-Observability-C42\\data\\raw\\crossref_records.json",
+  "raw_item_count": 24,
+  "reparsed_record_count": 24,
+  "snapshot_record_count": 24,
+  "snapshot_matches_reparse": true,
+  "raw_items_missing_doi": 0,
+  "duplicate_snapshot_paper_ids": [],
+  "raw_doi_ids_not_in_snapshot": [],
+  "snapshot_paper_ids_not_in_raw": [],
+  "required_field_empty_counts": {
+    "paper_id": 0,
+    "title": 0,
+    "summary": 0,
+    "authors": 0,
+    "published": 0
+  },
+  "optional_field_empty_counts": {
+    "categories": 24,
+    "primary_category": 24,
+    "updated": 24,
+    "abs_url": 0,
+    "pdf_url": 16,
+    "comment": 22
+  },
+  "cleaning_input_ready": true,
+  "records_with_empty_cleaning_fields": {
+    "paper_id": 0,
+    "title": 0,
+    "summary": 0,
+    "authors": 0,
+    "published": 0
+  },
+  "sample_record": {
+    "paper_id": "10.47576/2949-1894.2026.7.7.023",
+    "title": "\u0421\u043d\u0438\u0436\u0435\u043d\u0438\u0435 \u0440\u0438\u0441\u043a\u043e\u0432 \u043f\u0440\u0438\u043c\u0435\u043d\u0435\u043d\u0438\u044f LLM (Large Language Model) \u0432 \u0441\u0444\u0435\u0440\u0435 \u044d\u043a\u043e\u043d\u043e\u043c\u0438\u0447\u0435\u0441\u043a\u043e\u0439 \u0431\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u043e\u0441\u0442\u0438 \u043f\u0440\u0435\u0434\u043f\u0440\u0438\u044f\u0442\u0438\u0439 \u043c\u043e\u043b\u043e\u0447\u043d\u043e\u0439 \u043f\u0440\u043e\u043c\u044b\u0448\u043b\u0435\u043d\u043d\u043e\u0441\u0442\u0438 \u043d\u0430 \u043e\u0441\u043d\u043e\u0432\u0435 \u043f\u043e\u0434\u0445\u043e\u0434\u0430 RAG (Retrieval-Augmented Generation)",
+    "summary": "<jats:p>\u0412 \u0441\u0442\u0430\u0442\u044c\u0435 \u043f\u0440\u043e\u0432\u0435\u0434\u0435\u043d\u043e \u0438\u0441\u0441\u043b\u0435\u0434\u043e\u0432\u0430\u043d\u0438\u0435 \u043e\u0441\u043e\u0431\u0435\u043d\u043d\u043e\u0441\u0442\u0435\u0439 \u0441\u043d\u0438\u0436\u0435\u043d\u0438\u044f \u0440\u0438\u0441\u043a\u043e\u0432 \u043f\u0440\u0438\u043c\u0435\u043d\u0435\u043d\u0438\u044f LLM (Large Language Model) \u0432 \u0441\u0444\u0435\u0440\u0435 \u044d\u043a\u043e\u043d\u043e\u043c\u0438\u0447\u0435\u0441\u043a\u043e\u0439 \u0431\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u043e\u0441\u0442\u0438 \u043f\u0440\u0435\u0434\u043f\u0440\u0438\u044f\u0442\u0438\u0439 \u043c\u043e\u043b\u043e\u0447\u043d\u043e\u0439 \u043f\u0440\u043e\u043c\u044b\u0448\u043b\u0435\u043d\u043d\u043e\u0441\u0442\u0438 \u043d\u0430 \u043e\u0441\u043d\u043e\u0432\u0435 \u043f\u043e\u0434\u0445\u043e\u0434\u0430 RAG (Retrieval-Augmented Generation) \u0432 \u0441\u043e\u0432\u0440\u0435\u043c\u0435\u043d\u043d\u044b\u0445 \u0443\u0441\u043b\u043e\u0432\u0438\u044f\u0445. \u0420\u0430\u0441\u0441\u043c\u043e\u0442\u0440\u0435\u043d\u044b \u0440\u0438\u0441\u043a\u0438 \u043f\u0440\u0438\u043c\u0435\u043d\u0435\u043d\u0438\u044f LLM \u0432 \u0441\u0444\u0435\u0440\u0435 \u044d\u043a\u043e\u043d\u043e\u043c\u0438\u0447\u0435\u0441\u043a\u043e\u0439 \u0431\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u043e\u0441\u0442\u0438 \u043f\u0440\u0435\u0434\u043f\u0440\u0438\u044f\u0442\u0438\u0439 \u043c\u043e\u043b\u043e\u0447\u043d\u043e\u0439 \u043f\u0440\u043e\u043c\u044b\u0448\u043b\u0435\u043d\u043d\u043e\u0441\u0442\u0438. \u041f\u043e\u0434\u0440\u043e\u0431\u043d\u043e \u0440\u0430\u0437\u043e\u0431\u0440\u0430\u043d\u044b \u0441\u0446\u0435\u043d\u0430\u0440\u0438\u0438 \u043f\u0440\u0438\u043c\u0435\u043d\u0435\u043d\u0438\u044f LLM+RAG \u0432 \u0440\u043e\u0441\u0441\u0438\u0439\u0441\u043a\u043e\u0439 \u043c\u043e\u043b\u043e\u0447\u043d\u043e\u0439 \u043f\u0440\u043e\u043c\u044b\u0448\u043b\u0435\u043d\u043d\u043e\u0441\u0442\u0438 \u2013 \u0441 \u043e\u043f\u0438\u0441\u0430\u043d\u0438\u0435\u043c \u043f\u0440\u043e\u0446\u0435\u0441\u0441\u0430, \u0437\u0430\u0434\u0435\u0439\u0441\u0442\u0432\u043e\u0432\u0430\u043d\u043d\u044b\u0445 \u0434\u0430\u043d\u043d\u044b\u0445, \u0440\u0435\u0448\u0430\u0435\u043c\u044b\u0445 \u0440\u0438\u0441\u043a\u043e\u0432 \u0438 \u0434\u043e\u0441\u0442\u0438\u0433\u043d\u0443\u0442\u044b\u0445 \u0440\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442\u043e\u0432. \u041f\u043e\u043a\u0430\u0437\u0430\u043d\u043e, \u0447\u0442\u043e \u0432 \u0440\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442\u0435 \u0438\u043d\u0442\u0435\u0433\u0440\u0430\u0446\u0438\u044f RAG \u0441 LLM \u0442\u0440\u0430\u043d\u0441\u0444\u043e\u0440\u043c\u0438\u0440\u0443\u0435\u0442 \u0433\u0435\u043d\u0435\u0440\u0430\u0442\u0438\u0432\u043d\u0443\u044e \u043c\u043e\u0434\u0435\u043b\u044c \u0438\u0437 \u043f\u043e\u0442\u0435\u043d\u0446\u0438\u0430\u043b\u044c\u043d\u043e \u043e\u043f\u0430\u0441\u043d\u043e\u0433\u043e \u0438\u043d\u0441\u0442\u0440\u0443\u043c\u0435\u043d\u0442\u0430 \u0432 \u043d\u0430\u0434\u0435\u0436\u043d\u044b\u0439 \u043c\u0435\u0445\u0430\u043d\u0438\u0437\u043c \u043f\u043e\u0434\u0434\u0435\u0440\u0436\u043a\u0438 \u043f\u0440\u0438\u043d\u044f\u0442\u0438\u044f \u0440\u0435\u0448\u0435\u043d\u0438\u0439 \u2013 \u043e\u0442 \u043c\u043e\u043d\u0438\u0442\u043e\u0440\u0438\u043d\u0433\u0430 \u0443\u0433\u0440\u043e\u0437 \u0444\u0430\u043b\u044c\u0441\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u0438 \u0434\u043e \u043f\u0440\u043e\u0433\u043d\u043e\u0437\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u044f \u044d\u043a\u043e\u043d\u043e\u043c\u0438\u0447\u0435\u0441\u043a\u0438\u0445 \u043f\u043e\u043a\u0430\u0437\u0430\u0442\u0435\u043b\u0435\u0439 \u0441 \u0443\u0447\u0435\u0442\u043e\u043c \u043e\u0442\u0440\u0430\u0441\u043b\u0435\u0432\u043e\u0439 \u0441\u043f\u0435\u0446\u0438\u0444\u0438\u043a\u0438.</jats:p> <jats:p>The article examines the features of reducing the risks of using LLM (Large Language Model) in the field of economic security of dairy industry enterprises based on the RAG (Retrieval-Augmented Generation) approach in modern conditions. The risks of using LLM in the field of economic security of dairy industry enterprises are considered. The scenarios of LLM+RAG application in the Russian dairy industry are analyzed in detail, describing the process, the data involved, the risks to be solved and the results achieved. It is shown that as a result, the integration of RAG with LLM transforms the generative model from a potentially dangerous tool into a reliable decision support mechanism, from monitoring fraud threats to forecasting economic indicators based on industry specifics.</jats:p>",
+    "authors": [
+      "\u0418.\u0412. \u0415\u0440\u043c\u0430\u043a\u043e\u0432",
+      "\u0412.\u0412. \u0424\u0438\u043b\u0430\u0442\u043e\u0432"
+    ],
+    "categories": [],
+    "primary_category": "",
+    "published": "2026-06-15",
+    "updated": "",
+    "abs_url": "https://doi.org/10.47576/2949-1894.2026.7.7.023",
+    "pdf_url": "",
+    "comment": "Reducing the risks of using LLM (Large Language Model) in the field of economic security of dairy enterprises based on the RAG (Retrieval-Augmented Generation) approach"
+  },
+  "notes": [
+    "paper_id is the canonicalized Crossref DOI (trimmed and lowercased).",
+    "HTML/JATS content in summary is preserved in the raw snapshot; cleaning removes markup.",
+    "Empty title, summary, authors, or published values are retained in raw records so cleaning can apply its filtering rules.",
+    "categories, updated, pdf_url, and comment are optional Crossref metadata."
+  ]
+}

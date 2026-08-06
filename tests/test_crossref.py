@@ -1,11 +1,18 @@
 from __future__ import annotations
 
 from dataclasses import asdict
+import json
 from types import SimpleNamespace
 
 import requests
 
-from ingestion.crossref import PaperRecord, fetch_source_records, load_raw_records, parse_crossref_payload
+from ingestion.crossref import (
+    audit_raw_lineage,
+    fetch_source_records,
+    load_raw_records,
+    parse_crossref_payload,
+    write_raw_lineage_handoff,
+)
 
 
 def _payload() -> dict:
@@ -43,7 +50,7 @@ def test_parse_uses_canonical_doi_and_keeps_missing_abstract() -> None:
 def test_load_raw_records_round_trip(tmp_path) -> None:
     expected = parse_crossref_payload(_payload())
     snapshot = tmp_path / "crossref_records.json"
-    snapshot.write_text(__import__("json").dumps([asdict(record) for record in expected]), encoding="utf-8")
+    snapshot.write_text(json.dumps([asdict(record) for record in expected]), encoding="utf-8")
 
     assert load_raw_records(snapshot) == expected
 
@@ -56,7 +63,7 @@ def test_fetch_retries_429_and_saves_both_raw_artifacts(monkeypatch, tmp_path) -
         calls.append((args, kwargs))
         response = responses.pop(0)
         if response.status_code == 200:
-            response._content = __import__("json").dumps(_payload()).encode()
+            response._content = json.dumps(_payload()).encode()
         return response
 
     monkeypatch.setattr("ingestion.crossref.requests.get", fake_get)
@@ -77,6 +84,34 @@ def test_fetch_retries_429_and_saves_both_raw_artifacts(monkeypatch, tmp_path) -
     assert calls[0][1]["params"] == {"query": "machine learning", "filter": "has-abstract:true", "rows": 2}
     assert settings.paths.raw_api_response.exists()
     assert load_raw_records(settings.paths.raw_records_json) == records
+
+
+def test_lineage_audit_and_handoff_identify_cleaning_ready_snapshot(tmp_path) -> None:
+    raw_response = tmp_path / "raw" / "crossref_response.json"
+    raw_records = tmp_path / "raw" / "crossref_records.json"
+    raw_response.parent.mkdir()
+    raw_response.write_text(json.dumps(_payload()), encoding="utf-8")
+    raw_records.write_text(
+        json.dumps([asdict(record) for record in parse_crossref_payload(_payload())]),
+        encoding="utf-8",
+    )
+    settings = SimpleNamespace(
+        paths=SimpleNamespace(
+            raw_api_response=raw_response,
+            raw_records_json=raw_records,
+            raw_lineage_report=tmp_path / "raw" / "crossref_lineage_report.json",
+            raw_handoff_markdown=tmp_path / "raw" / "crossref_handoff.md",
+        )
+    )
+
+    report = write_raw_lineage_handoff(settings)
+
+    assert report["snapshot_matches_reparse"] is True
+    assert report["cleaning_input_ready"] is True
+    assert report["duplicate_snapshot_paper_ids"] == []
+    assert audit_raw_lineage(settings) == report
+    assert settings.paths.raw_lineage_report.exists()
+    assert settings.paths.raw_handoff_markdown.exists()
 
 
 def _response(status_code: int, headers: dict[str, str] | None = None) -> requests.Response:

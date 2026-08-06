@@ -14,6 +14,8 @@ class Paths:
     workspace_dir: Path
     raw_api_response: Path
     raw_records_json: Path
+    raw_lineage_report: Path
+    raw_handoff_markdown: Path
     clean_csv: Path
     clean_json: Path
     chroma_dir: Path
@@ -82,6 +84,8 @@ def load_settings(project_dir: Path | None = None) -> Settings:
         workspace_dir=workspace,
         raw_api_response=data_dir / "raw" / "crossref_response.json",
         raw_records_json=data_dir / "raw" / "crossref_records.json",
+        raw_lineage_report=data_dir / "raw" / "crossref_lineage_report.json",
+        raw_handoff_markdown=data_dir / "raw" / "crossref_handoff.md",
         clean_csv=data_dir / "clean" / "papers_clean.csv",
         clean_json=data_dir / "clean" / "papers_clean.json",
         chroma_dir=data_dir / "chroma",
