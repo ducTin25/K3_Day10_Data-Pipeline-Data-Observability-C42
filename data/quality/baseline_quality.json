@@ -1,10 +1,6 @@
 {
   "report_name": "baseline",
-<<<<<<< HEAD
-  "generated_at": "2026-08-06T04:46:54.423823+00:00",
-=======
-  "generated_at": "2026-08-06T05:03:33.811122+00:00",
->>>>>>> 331be281d443b25248ca64ac4e9a1f582a169606
+  "generated_at": "2026-08-06T05:36:01.856471+00:00",
   "total_rows": 24,
   "passed": true,
   "checks": {
