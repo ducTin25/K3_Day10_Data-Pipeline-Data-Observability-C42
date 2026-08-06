@@ -89,10 +89,53 @@ Việc riêng của vai trò rag ở CP3 không phụ thuộc ai (tách biệt v
 
 Pass-criteria CP3 cấp team (`baseline_metrics.json`, `answers`, quality/freshness, `phase1_report.md`) phụ thuộc vào Vai trò 1 (lead) implement + chạy `uv run python script/run_phase1.py`. Tại thời điểm ghi nhận, `src/pipelines/phase1.py::main()` **vẫn còn `NotImplementedError`** — 3 việc riêng của rag ở trên không bị chặn, nhưng checkpoint chưa "xong" ở cấp team. Sau khi lead chạy `phase1.py` (có thể tự rebuild lại index), cần re-run script xác nhận CP2/CP3 để đảm bảo `papers-baseline` vẫn khớp.
 
+## CHECKPOINT 4 — Nghỉ 15 phút; lưu ví dụ query baseline để đối chiếu
+
+Không phụ thuộc ai. Chốt lại bộ ví dụ baseline dùng chung cho CP5 (corrupted) và CP6 (repaired) — chạy lại đúng các query này trên `papers-corrupted`/`papers-repaired` sau này để so sánh, không đổi query giữa các trạng thái.
+
+**Semantic search** — Query: `"What are recent papers about retrieval augmented generation for agents?"`
+
+| Rank | score | paper_id | title |
+|---|---|---|---|
+| 1 | 0.6037 | `10.63646/kpqm1958` | The Age of Autonomous Agents: A Bibliometric Review of Agentic AI Architectures... |
+| 2 | 0.5383 | `10.32473/flairs.39.1.141782` | An Exploratory Study of Agentic Retrieval Augmented Generation for Mental Health... |
+| 3 | 0.5184 | `10.70121/001c.158711` | The Role of Retrieval-Augmented Generation in Improving Factual Accuracy for Medical... |
+
+**Exact lookup** — `paper_id = "10.1111/exsy.70341"` -> found, title "Hi‐RAG: A Hierarchical Retrieval‐Augmented Generation Framework...", authors "Wei Tian, Yuhao Zhou", published `2026-08-01`.
+
+**Agent (trong corpus)** — Q: `"Who authored the paper 'JADE-Plus...'?"` -> đúng đủ 5 tác giả, khớp `ground_truth` của `eval-002` trong `test_set.json`.
+
+**Agent (ngoài corpus, guard)** — Q: `"What is the capital city of France?"` -> `"The indexed corpus does not cover the question about the capital city of France."` (đúng sau khi sửa system prompt ở CP3).
+
+**Baseline metrics tham chiếu** (`data/results/baseline_metrics.json`, sau lần evaluator chạy cuối): `retrieval_hit_rate=1.0`, `mean_token_f1=0.575`, `judge_accuracy=0.542`, `mean_judge_score=3.08`.
+
+Nếu ở CP5/CP6 chạy lại đúng các query trên mà `paper_id`/score đổi khác hẳn, hoặc agent bắt đầu bịa đáp án — đó là bằng chứng trực tiếp cho thấy corruption ảnh hưởng tới RAG.
+
+## CHECKPOINT 5 — Build `papers-corrupted`, đo impact so với baseline
+
+Nguồn: `data/clean/papers_clean_corrupted.csv` (23 dòng, do Vai trò 3 bàn giao — xem `data/results/corruption_log.json`: drop 2 record mới nhất, blank summary 2, inject noise 2, truncate title 2, sửa ngày cũ 1, thêm 1 duplicate; 24 -> 23 dòng).
+
+1. **Build `papers-corrupted` riêng** — path/collection tách biệt hoàn toàn với baseline (`corrupted_embeddings_json`, không ghi đè `embeddings_json`). 23/23 document, `collection_name=papers-corrupted` đúng như config.
+
+2. **Chạy lại ĐÚNG query baseline (CP4) trên `papers-corrupted`** — quan sát retrieval đổi:
+   - Semantic search cùng query: rank #2 **đổi hẳn** — một paper mới xuất hiện (`10.2196/preprints.106157`, score 0.558) chen vào top-3, đẩy `10.70121/001c.158711` (baseline #3) ra khỏi top-3. Paper mới này chính là 1 trong 2 record bị `inject_noise` theo corruption log — noise làm tăng điểm tương đồng giả tạo, gây lệch retrieval ranking. **Đây là bằng chứng cụ thể corruption ảnh hưởng RAG.**
+   - Exact lookup `paper_id=10.1111/exsy.70341` (paper bị `drop_latest_records`) -> `found=False` đúng như kỳ vọng — record biến mất khỏi corpus sau corruption.
+   - Exact lookup `paper_id=10.1007/s10278-026-02086-9` (JADE-Plus, bị `blank_summary` + `add_duplicate_rows`) -> vẫn tìm thấy (title/authors còn nguyên), nhưng summary trong `text_for_embedding` đã rỗng — câu hỏi dạng "What does the paper discuss?" (loại `summary` trong test set) sẽ suy giảm chất lượng câu trả lời dù record vẫn tồn tại.
+
+3. **Kiểm tra `papers-baseline` không bị mutate** — reload lại baseline sau khi build corrupted:
+   - Vẫn đủ 24/24 document, `collection_name=papers-baseline`.
+   - Lookup `10.1111/exsy.70341` trên baseline vẫn `found=True` (paper này chỉ mất trên corrupted, baseline không đổi).
+   - Semantic search baseline chạy lại cho đúng top-3 y hệt CP4 (`10.63646/kpqm1958, 10.32473/flairs.39.1.141782, 10.70121/001c.158711`).
+   - **Đạt** — build corrupted không hề đụng tới path/collection baseline.
+
+Pass criteria CP5 cho vai trò rag: **đạt** — `papers-corrupted` build riêng, có bằng chứng retrieval thay đổi (rank #2 chen vào do noise, 1 record biến mất do drop), baseline nguyên vẹn không bị ghi đè.
+
 ## Trạng thái
 
 - [x] CP0: đọc contract, chốt embedding model/collection naming/metadata, chuẩn bị smoke query
 - [x] CP1: xác minh schema + chất lượng `text_for_embedding` trên dữ liệu clean thật, phát hiện và ghi nhận embeddings manifest lỗi cần rebuild
 - [x] CP2: build `papers-baseline` đầy đủ (24/24 doc), smoke test semantic search + lookup + agent đều pass
-- [x] CP3: xác nhận baseline khớp clean data, demo search/lookup, phát hiện + sửa lỗi agent trả lời ngoài corpus. Lead đã chạy xong `phase1.py` end-to-end: `data/results/baseline_metrics.json` (`retrieval_hit_rate=1.0`, `mean_token_f1=0.575`, `judge_accuracy=0.5`, `mean_judge_score=3.17`), `baseline_answers.json` và `data/reports/phase1_report.md` đã tồn tại.
-- [ ] CP4+: re-verify `papers-baseline` sau khi merge/rebuild để đảm bảo vẫn khớp 24/24 record trước khi sang corruption flow
+- [x] CP3: xác nhận baseline khớp clean data, demo search/lookup, phát hiện + sửa lỗi agent trả lời ngoài corpus. Lead đã chạy xong `phase1.py` end-to-end: `data/results/baseline_metrics.json`, `baseline_answers.json` và `data/reports/phase1_report.md` đã tồn tại.
+- [x] CP4: nghỉ; đã chốt bộ ví dụ query baseline (semantic/lookup/agent) làm tham chiếu cho CP5-CP6
+- [x] CP5: build `papers-corrupted` (23/23 doc) từ dữ liệu Vai trò 3 bàn giao, chứng minh được retrieval thay đổi (noise chen top-3, record bị drop mất khỏi lookup), xác nhận baseline không bị mutate
+- [ ] CP6+: build `papers-repaired` sau khi Vai trò 3 repair từ raw, chạy lại đúng bộ query để đo mức phục hồi
