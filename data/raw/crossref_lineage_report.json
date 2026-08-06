@@ -1,7 +1,7 @@
 {
   "source": "Crossref REST API",
-  "raw_response_path": "D:\\AI20K\\codelabs\\K3_Day10_Data-Pipeline-Data-Observability-C42\\data\\raw\\crossref_response.json",
-  "raw_records_path": "D:\\AI20K\\codelabs\\K3_Day10_Data-Pipeline-Data-Observability-C42\\data\\raw\\crossref_records.json",
+  "raw_response_path": "C:\\Users\\Admin\\K3_Day10_Data-Pipeline-Data-Observability-C42\\data\\raw\\crossref_response.json",
+  "raw_records_path": "C:\\Users\\Admin\\K3_Day10_Data-Pipeline-Data-Observability-C42\\data\\raw\\crossref_records.json",
   "raw_item_count": 24,
   "reparsed_record_count": 24,
   "snapshot_record_count": 24,
