@@ -197,6 +197,8 @@ Giữ nguyên test set giúp mọi thay đổi metric phản ánh thay đổi da
 
 Corruption log tồn tại tại `data/results/corruption_log.json` và ghi loại lỗi, count, affected paper IDs. Repaired dataset có 24 records, `repaired_quality.json` đạt PASS và `repaired_metrics.json` chứa RAG evaluation metrics chuẩn. Repair được thực hiện bằng cách rebuild từ `data/raw/crossref_records.json`, không chỉnh tay corrupted answers hay metrics.
 
+Log còn ghi parameter, count trước/sau và giá trị before/after cho từng record. Audit lineage xác nhận 7/7 IDs chịu corruption đều có trong frozen raw snapshot và được phục hồi đúng một lần trong repaired dataset. Case `eval-009` là bằng chứng hit → miss → recovered hit: DOI `10.1111/exsy.70341` được retrieve từ `papers-baseline`, biến mất ở `papers-corrupted` sau drop, rồi xuất hiện lại khi truy vấn `papers-repaired`.
+
 ## 10. So sánh baseline, corrupted và repaired
 
 | Metric/signal | Baseline | Corrupted | Repaired | Nhận xét |
@@ -238,3 +240,12 @@ Kết luận được artifact hỗ trợ: (1) corruption làm mất/biến dạ
 - [x] Các đường dẫn baseline và artifact truy cập được.
 - [ ] Mỗi thành viên đã hoàn thành báo cáo vai trò riêng (hiện có 1/5: Nguyễn Đức Tín).
 - [x] Đã chạy secret scan cuối cùng; chỉ có placeholder `GOOGLE_API_KEY=your_key_here` trong README, không có key thật hoặc `.env` được track.
+
+### CP5/CP6 completion evidence
+
+- [x] Corruption log có type, parameter, ID, before/after và before/after count.
+- [x] Corrupted, baseline và repaired dùng collection/path riêng; audit xác nhận baseline không bị mutate.
+- [x] Repair re-clean từ frozen raw snapshot; 7/7 affected IDs có lineage và phục hồi đúng một lần.
+- [x] Ba trạng thái dùng cùng fixed test set và có metrics/quality/freshness delta.
+- [x] Có case-level evidence `eval-009` với collection, ground-truth ID và hit/miss/recovery.
+- [x] Report ghi rõ giới hạn: corruption chạy gộp, judge có dao động và Ragas đang tắt.
