@@ -39,8 +39,39 @@ Nguồn: `data/clean/papers_clean.csv` / `papers_clean.json` (24 records, do Vai
 
 **Hành động ở CP2:** rebuild lại bằng `LocalEmbeddingIndex.build()` (không dùng `.load()`) từ đủ 24 record trong `papers_clean.csv`, để `persist_path`/`collection_name` ghi đúng theo máy chạy thật.
 
+## CHECKPOINT 2 — Build baseline thật, smoke test search/lookup/agent
+
+Đã rebuild `papers-baseline` bằng `LocalEmbeddingIndex.build()` từ đủ 24 record clean (thay cho manifest lỗi 1/24 doc trước đó).
+
+- `data/embeddings/papers_embeddings.json`: `collection_name=papers-baseline`, `embedding_model=sentence-transformers/all-MiniLM-L6-v2`, `persist_path` đúng máy hiện tại, **24/24 document**.
+- Dọn 2 folder Chroma mồ côi (`cb674a12-...` của bản build lỗi cũ, `0e31576b-...` của lần build nháp) — đã xác nhận qua bảng `segments` trong `chroma.sqlite3` rằng folder đang thật sự dùng là `6e3c438e-8b89-45c8-ad68-742e914cc6df` trước khi xoá.
+
+**Test semantic_search** (2 query đã chuẩn bị từ CP0), trả về kết quả có điểm số và nguồn hợp lý:
+- "What are recent papers about retrieval augmented generation for agents?" -> top1 `10.63646/kpqm1958` (score 0.60)
+- "How do LLM agents use retrieval tools?" -> top1 `10.70121/001c.158711` (score 0.48)
+
+**Test lookup** (exact match): theo `paper_id` -> tìm thấy; theo title chính xác -> tìm thấy; giá trị không tồn tại -> trả `None` đúng như kỳ vọng.
+
+**Test agent** (dùng câu hỏi thật `eval-002` từ `data/eval/test_set.json`, loại `authors`):
+- Câu hỏi: "Who authored the paper 'JADE-Plus...'?"
+- Ground truth: `Soroush Baseri Saadi, Jonas Ver Berne, Rocharles Cavalcante Fontenele, Peter Claes, Reinhilde Jacobs`
+- Agent trả lời đúng đủ cả 5 tác giả, đã gọi tool (`lookup_paper`/`semantic_search_papers`) trước khi trả lời theo đúng system prompt, không bịa ngoài corpus.
+
+Pass criteria CP2 cho vai trò rag: **đạt** — embedding manifest + collection baseline tồn tại và đúng; semantic search, exact lookup, agent đều trả kết quả có nguồn kiểm chứng được.
+
+### Merge conflict sau `git pull` — đã xử lý
+
+Sau khi build lần đầu, `git pull` mang về 6 commit từ team (bao gồm bản vá `src/retrieval/index.py`: `persist_path` giờ lưu **tương đối** thay vì tuyệt đối, thêm `assert_clean_contract(df)` trước khi build — đúng fix cho vấn đề đã ghi ở CP1) và tạo conflict trên 3 artifact sinh ra từ code:
+
+- `data/chroma/cb674a12-.../data_level0.bin, length.bin` (modify/delete)
+- `data/chroma/chroma.sqlite3` (binary, không auto-merge được)
+- `data/embeddings/papers_embeddings.json` (content, nhiều hunk `<<<<<<<`)
+
+Không hand-merge JSON/binary sinh ra từ code — xoá sạch toàn bộ `data/chroma/` và `papers_embeddings.json` cũ (kể cả bản build đầu của CP2), rồi **rebuild lại từ đầu** bằng `LocalEmbeddingIndex.build()` với code `index.py` đã merge. Kết quả: `persist_path` giờ là `data/chroma` (tương đối, portable giữa các máy trong nhóm), 24/24 document, đã re-run đủ semantic search/lookup/agent smoke test ở trên và đều pass. Dọn thêm 1 folder Chroma mồ côi phát sinh giữa 2 lần build (xác nhận qua bảng `segments` trước khi xoá). Đã `git commit` hoàn tất merge (chưa `push`).
+
 ## Trạng thái
 
 - [x] CP0: đọc contract, chốt embedding model/collection naming/metadata, chuẩn bị smoke query
 - [x] CP1: xác minh schema + chất lượng `text_for_embedding` trên dữ liệu clean thật, phát hiện và ghi nhận embeddings manifest lỗi cần rebuild
-- [ ] CP2: build `papers-baseline` đầy đủ, chạy smoke test semantic search + lookup + agent (việc tiếp theo)
+- [x] CP2: build `papers-baseline` đầy đủ (24/24 doc), smoke test semantic search + lookup + agent đều pass
+- [ ] CP3+: chờ baseline pipeline (`phase1.py`, do lead phụ trách) chạy end-to-end để có `baseline_metrics.json` chính thức
