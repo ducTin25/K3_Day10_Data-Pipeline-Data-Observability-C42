@@ -21,7 +21,7 @@
 
 ## 2. Tóm tắt kết quả
 
-Nhóm đã hoàn thành cả baseline và corruption/repair pipeline trên snapshot Crossref gồm 24 records. Baseline tạo 24 clean records, collection `papers-baseline` gồm 24 documents và fixed test set 24 câu; đạt `retrieval_hit_rate=1.000`, `mean_token_f1=0.575`, `judge_accuracy=0.542`, `mean_judge_score=3.083`, quality PASS và freshness FRESH. Corruption flow tạo có chủ đích các lỗi drop latest, blank summary, noise, truncate title, stale date và duplicate; lưu 23 rows vào collection riêng `papers-corrupted` và evaluate bằng đúng test set baseline. Corruption làm retrieval hit rate giảm còn 0.667, token F1 còn 0.370, judge accuracy còn 0.375; quality chuyển sang FAIL và freshness thành STALE. Repair rebuild dữ liệu từ trusted raw snapshot, tạo 24 rows trong `papers-repaired`, đưa retrieval hit rate và token F1 trở lại đúng baseline, quality về PASS và freshness về FRESH. Judge accuracy phục hồi một phần lên 0.500, còn mean judge score tăng lên 3.167. Ba collection và toàn bộ manifests/answers/metrics/freshness reports dùng path riêng; flow kiểm tra hash artifact và nội dung collection baseline để phát hiện ghi đè. Giới hạn còn lại là chưa cô lập tác động của từng corruption scenario và Ragas vẫn bị tắt.
+Nhóm đã hoàn thành cả baseline và corruption/repair pipeline trên snapshot Crossref gồm 24 records. Baseline tạo 24 clean records, collection `papers-baseline` gồm 24 documents và fixed test set 24 câu; đạt `retrieval_hit_rate=1.000`, `mean_token_f1=0.575`, `judge_accuracy=0.500`, `mean_judge_score=3.167`, quality PASS và freshness FRESH. Corruption flow tạo có chủ đích các lỗi drop latest, blank summary, noise, truncate title, stale date và duplicate; lưu 23 rows vào collection riêng `papers-corrupted` và evaluate bằng đúng test set baseline. Corruption làm retrieval hit rate giảm còn 0.667, token F1 còn 0.370, judge accuracy còn 0.375 và mean judge score còn 2.792; quality chuyển sang FAIL và freshness thành STALE. Repair rebuild dữ liệu từ trusted raw snapshot, tạo 24 rows trong `papers-repaired`, đưa cả retrieval, answer metrics, quality và freshness trở lại đúng baseline. Ba collection và toàn bộ manifests/answers/metrics/freshness reports dùng path riêng; flow kiểm tra hash artifact và nội dung collection baseline để phát hiện ghi đè. Giới hạn còn lại là chưa cô lập tác động của từng corruption scenario và Ragas vẫn bị tắt.
 
 ## 3. Kiến trúc và luồng dữ liệu
 
@@ -80,7 +80,7 @@ python -m uv run python script/run_corruption_flow.py
 | Lệnh | Trạng thái | Thời điểm chạy gần nhất | Bằng chứng |
 | --- | --- | --- | --- |
 | Baseline pipeline | Thành công, exit code 0 | 2026-08-06 12:06 (Asia/Saigon) | `data/results/baseline_metrics.json`, `data/reports/phase1_report.md` |
-| Test suite | Thành công, 13 tests passed | 2026-08-06 | Output pytest và commit merge baseline |
+| Test suite | Thành công, 16 tests passed | 2026-08-06 | `python -m uv run pytest -q` |
 | Corruption flow | Thành công, exit code 0 | 2026-08-06 | `data/results/corrupted_metrics.json`, `repaired_metrics.json`, `data/reports/corruption_report.md` |
 
 ## 5. Ingestion, cleaning và data contract
@@ -157,8 +157,8 @@ Giữ nguyên test set giúp mọi thay đổi metric phản ánh thay đổi da
 | --- | ---: | --- |
 | `retrieval_hit_rate` | 1.000 | Cả 24 câu đều retrieve được ground-truth document trong top-4 |
 | `mean_token_f1` | 0.575 | Mức overlap token trung bình giữa answer và reference; thấp hơn hit rate vì answer extraction thường ngắn hơn ground truth summary |
-| `judge_accuracy` | 0.542 | 13/24 answers được LLM judge đánh giá materially correct |
-| `mean_judge_score` | 3.083/5 | Chất lượng answer trung bình theo judge |
+| `judge_accuracy` | 0.500 | 12/24 answers được LLM judge đánh giá materially correct |
+| `mean_judge_score` | 3.167/5 | Chất lượng answer trung bình theo judge |
 | Ragas | N/A | Bỏ qua theo cấu hình; chỉ chạy khi `RUN_RAGAS=1` |
 
 ## 8. Data quality và freshness
@@ -203,19 +203,19 @@ Corruption log tồn tại tại `data/results/corruption_log.json` và ghi lo�
 | --- | ---: | ---: | ---: | --- |
 | `retrieval_hit_rate` | 1.000 | 0.667 | 1.000 | Corruption −0.333; repair +0.333, phục hồi hoàn toàn |
 | `mean_token_f1` | 0.575 | 0.370 | 0.575 | Corruption −0.205; repair +0.205, phục hồi hoàn toàn |
-| `judge_accuracy` | 0.542 | 0.375 | 0.500 | Corruption −0.167; repair +0.125, chưa phục hồi hoàn toàn |
-| `mean_judge_score` | 3.083 | 2.792 | 3.167 | Corruption −0.292; repair +0.375, cao hơn baseline 0.083 |
+| `judge_accuracy` | 0.500 | 0.375 | 0.500 | Corruption −0.125; repair +0.125, phục hồi về baseline |
+| `mean_judge_score` | 3.167 | 2.792 | 3.167 | Corruption −0.375; repair +0.375, phục hồi về baseline |
 | Quality | PASS | FAIL | PASS | Data-level corruption được phát hiện và repair |
-| Freshness signal | FRESH | FAIL: 1 stale | PASS: 0 stale | Dựa trên quality check; chưa có freshness report riêng cho từng trạng thái |
+| Freshness signal | FRESH: 0/24 stale | STALE: 1/23 stale | FRESH: 0/24 stale | Có report riêng cho baseline, corrupted và repaired trong `data/quality/` |
 
-Kết luận được artifact hỗ trợ: (1) corruption làm mất/biến dạng corpus, đồng thời tạo duplicate, summary lỗi và stale date → quality/freshness chuyển PASS/FRESH thành FAIL/STALE → retrieval hit rate giảm 0.333 và token F1 giảm 0.205; (2) rebuild từ trusted raw snapshot → row count/uniqueness/freshness trở lại baseline → retrieval hit rate và token F1 phục hồi hoàn toàn. Judge metrics có dao động do LLM evaluator, vì vậy nhóm chỉ báo cáo mức phục hồi quan sát được và không khẳng định repaired judge accuracy phục hồi hoàn toàn.
+Kết luận được artifact hỗ trợ: (1) corruption làm mất/biến dạng corpus, đồng thời tạo duplicate, summary lỗi và stale date → quality/freshness chuyển PASS/FRESH thành FAIL/STALE → retrieval hit rate giảm 0.333, token F1 giảm 0.205, judge accuracy giảm 0.125 và mean judge score giảm 0.375; (2) rebuild từ trusted raw snapshot → row count/uniqueness/freshness trở lại baseline → cả bốn metrics phục hồi về mức baseline trong comparison run ngày 2026-08-06. Judge metrics vẫn phụ thuộc LLM evaluator, vì vậy kết luận chỉ áp dụng cho bộ artifacts cùng lượt chạy này.
 
 ## 11. Vấn đề tích hợp quan trọng
 
 - **Triệu chứng:** Merge Git tạo conflict trên `phase1.py`, metrics/report JSON/Markdown và binary `chroma.sqlite3`; một trạng thái resolve tạm thời còn đưa `phase1.py` về `NotImplementedError` và report có metric trùng.
 - **Nguyên nhân:** Nhiều nhánh cùng sửa orchestration và commit generated Chroma/evaluation artifacts; binary SQLite không thể merge theo dòng.
 - **Cách xử lý:** Giữ orchestration end-to-end, không hand-merge SQLite; dọn các Chroma segments mồ côi, rebuild `papers-baseline` từ clean dataset rồi regenerate metrics/quality/report.
-- **Cách xác minh:** `python -m uv run pytest -q` đạt 13 tests; baseline entrypoint exit code 0; manifest, Chroma và clean đều có 24 IDs/documents; merge commit `4621b1a`.
+- **Cách xác minh:** `python -m uv run pytest -q` đạt 16 tests; baseline và corruption entrypoints hoàn tất; manifest, Chroma và clean đều có 24 IDs/documents ở baseline/repaired; `corruption_comparison_audit.json` xác nhận baseline không bị ghi đè.
 
 ## 12. Giới hạn và hướng cải thiện
 
@@ -236,5 +236,5 @@ Kết luận được artifact hỗ trợ: (1) corruption làm mất/biến dạ
 - [x] Bảng ba trạng thái khớp với `data/results/` và comparison report.
 - [x] Baseline quality/freshness conclusions khớp `data/quality/`.
 - [x] Các đường dẫn baseline và artifact truy cập được.
-- [ ] Mỗi thành viên đã hoàn thành báo cáo vai trò riêng.
-- [ ] Đã chạy secret scan cuối cùng trước khi nộp.
+- [ ] Mỗi thành viên đã hoàn thành báo cáo vai trò riêng (hiện có 1/5: Nguyễn Đức Tín).
+- [x] Đã chạy secret scan cuối cùng; chỉ có placeholder `GOOGLE_API_KEY=your_key_here` trong README, không có key thật hoặc `.env` được track.

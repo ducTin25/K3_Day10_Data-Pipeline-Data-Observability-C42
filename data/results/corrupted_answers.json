@@ -23,7 +23,7 @@
     "judge": {
       "score": 5,
       "correct": true,
-      "reasoning": "The model answer accurately summarizes the key points of the reference answer, including the purpose of the study, the implementation of the JADE-Plus system, its evaluation metrics, and the performance results. It captures the essence of the research and its significance in the context of diagnosing jawbone lesions."
+      "reasoning": "The model answer accurately summarizes the key points of the reference answer, including the purpose of the study, the development of the JADE-Plus framework, its components, evaluation methods, and performance results. It captures the essence of the research and its significance in diagnosing jawbone lesions."
     }
   },
   {
@@ -77,7 +77,7 @@
     "judge": {
       "score": 5,
       "correct": true,
-      "reasoning": "The model answer matches the reference answer exactly, providing the correct publication date."
+      "reasoning": "The model answer matches the reference answer exactly, indicating it is materially correct."
     }
   },
   {
@@ -104,7 +104,7 @@
     "judge": {
       "score": 1,
       "correct": false,
-      "reasoning": "The model answer does not provide any categories assigned to the paper, which is the main requirement of the question. The reference answer is also empty, indicating that no categories were provided. Therefore, the model answer is not materially correct."
+      "reasoning": "The model answer does not provide any categories assigned to the paper, which is the key information requested in the question. The reference answer is also empty, but the model answer fails to address the question at all."
     }
   },
   {
@@ -162,7 +162,7 @@
     "judge": {
       "score": 5,
       "correct": true,
-      "reasoning": "The model answer matches the reference answer exactly, listing all authors correctly."
+      "reasoning": "The model answer matches the reference answer exactly, providing all the authors' names correctly."
     }
   },
   {
@@ -220,7 +220,7 @@
     "judge": {
       "score": 1,
       "correct": false,
-      "reasoning": "The model answer does not provide any categories assigned to the paper, which is the key information requested in the question. The reference answer is also empty, indicating that no categories were provided. Therefore, the model answer fails to address the question."
+      "reasoning": "The model answer does not provide any categories assigned to the paper, which is the key information requested in the question. The reference answer is also empty, indicating that no categories were provided. Therefore, the model answer is not materially correct."
     }
   },
   {
@@ -247,9 +247,9 @@
     "retrieval_hit": false,
     "token_f1": 0.09944751381215469,
     "judge": {
-      "score": 2,
+      "score": 1,
       "correct": false,
-      "reasoning": "The model answer provides a general overview of Retrieval-Augmented Generation (RAG) but fails to address the specific details and contributions of the Hi-RAG framework discussed in the reference answer. It lacks mention of the hierarchical structure, the specific retrieval strategies, the benchmark introduced, and the experimental results, which are crucial to understanding the paper's focus."
+      "reasoning": "The model answer does not address the specific content or findings of the paper 'Hi\u2010RAG' and instead provides a general statement about Retrieval-Augmented Generation. It lacks details about the hierarchical framework, the methodology, and the results discussed in the reference answer."
     }
   },
   {
@@ -278,7 +278,7 @@
     "judge": {
       "score": 1,
       "correct": false,
-      "reasoning": "The model answer provides an incorrect author name, while the reference answer correctly identifies the authors as Wei Tian and Yuhao Zhou."
+      "reasoning": "The model answer provides a name (Lihui Liu) that is not mentioned in the reference answer, which correctly identifies the authors as Wei Tian and Yuhao Zhou. Therefore, the model answer is incorrect."
     }
   },
   {
@@ -305,9 +305,9 @@
     "retrieval_hit": false,
     "token_f1": 0.0,
     "judge": {
-      "score": 2,
+      "score": 3,
       "correct": false,
-      "reasoning": "The model answer is close to the reference answer but is not materially correct as it provides a different date (June 30 vs. August 1)."
+      "reasoning": "The model answer is close to the reference answer but is not materially correct as it provides a different date (2026-06-30 vs. 2026-08-01)."
     }
   },
   {
@@ -365,7 +365,7 @@
     "judge": {
       "score": 1,
       "correct": false,
-      "reasoning": "The model answer only partially addresses the topic by mentioning the demand for Clinical Decision Support Systems (CDSS) but fails to discuss the key aspects of the paper, such as the limitations of Large Language Models (LLMs), the introduction of Enhanced Clinical RAG-LLM (ECRAG-LLM), and the specific innovations and results presented in the reference answer."
+      "reasoning": "The model answer only provides the initial context about the demand for Clinical Decision Support Systems (CDSS) but fails to address the key aspects of the paper, such as the limitations of Large Language Models (LLMs), the introduction of Enhanced Clinical RAG-LLM (ECRAG-LLM), and the specific innovations and results discussed in the reference answer."
     }
   },
   {
@@ -452,7 +452,7 @@
     "judge": {
       "score": 1,
       "correct": false,
-      "reasoning": "The model answer does not provide any categories assigned to the paper, which is the main requirement of the question. The reference answer is also empty, indicating that no categories were provided. Therefore, the model answer is not materially correct."
+      "reasoning": "The model answer does not provide any categories assigned to the paper, which is the main requirement of the question. The reference answer is also empty, but the model answer fails to address the question at all."
     }
   },
   {
@@ -597,7 +597,7 @@
     "judge": {
       "score": 1,
       "correct": false,
-      "reasoning": "The model answer does not address the content of the paper regarding the Microsoft Azure AI/machine learning hackathon or its focus on retrieval-augmented generation large language models. Instead, it discusses the evolution of large language models in a general context, which is not relevant to the specific topic of the paper."
+      "reasoning": "The model answer does not address the specific content of the paper regarding the Microsoft Azure AI/machine learning hackathon or its focus on retrieval-augmented generation large language models. Instead, it discusses the evolution of large language models in a general context, which is not relevant to the question."
     }
   },
   {
@@ -684,7 +684,7 @@
     "judge": {
       "score": 1,
       "correct": false,
-      "reasoning": "The model answer does not provide any categories assigned to the paper, which is the main requirement of the question. The reference answer is also empty, indicating that no categories were provided. Therefore, the model answer fails to address the question adequately."
+      "reasoning": "The model answer does not provide any categories assigned to the paper, which is the main requirement of the question. The reference answer is also empty, but the model answer fails to address the question at all."
     }
   }
 ]
