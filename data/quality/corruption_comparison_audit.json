@@ -1,0 +1,20 @@
+{
+  "baseline_artifacts_unchanged": true,
+  "baseline_collection_unchanged": true,
+  "fixed_test_set": "data/eval/test_set.json",
+  "collections": {
+    "papers-baseline": 24,
+    "papers-corrupted": 23,
+    "papers-repaired": 24
+  },
+  "manifests": {
+    "baseline": "data/embeddings/papers_embeddings.json",
+    "corrupted": "data/embeddings/papers_embeddings_corrupted.json",
+    "repaired": "data/embeddings/papers_embeddings_repaired.json"
+  },
+  "metrics": {
+    "baseline": "data/results/baseline_metrics.json",
+    "corrupted": "data/results/corrupted_metrics.json",
+    "repaired": "data/results/repaired_metrics.json"
+  }
+}
