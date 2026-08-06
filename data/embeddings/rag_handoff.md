@@ -59,6 +59,16 @@ Nguồn: `data/clean/papers_clean.csv` / `papers_clean.json` (24 records, do Vai
 
 Pass criteria CP2 cho vai trò rag: **đạt** — embedding manifest + collection baseline tồn tại và đúng; semantic search, exact lookup, agent đều trả kết quả có nguồn kiểm chứng được.
 
+### Merge conflict sau `git pull` — đã xử lý
+
+Sau khi build lần đầu, `git pull` mang về 6 commit từ team (bao gồm bản vá `src/retrieval/index.py`: `persist_path` giờ lưu **tương đối** thay vì tuyệt đối, thêm `assert_clean_contract(df)` trước khi build — đúng fix cho vấn đề đã ghi ở CP1) và tạo conflict trên 3 artifact sinh ra từ code:
+
+- `data/chroma/cb674a12-.../data_level0.bin, length.bin` (modify/delete)
+- `data/chroma/chroma.sqlite3` (binary, không auto-merge được)
+- `data/embeddings/papers_embeddings.json` (content, nhiều hunk `<<<<<<<`)
+
+Không hand-merge JSON/binary sinh ra từ code — xoá sạch toàn bộ `data/chroma/` và `papers_embeddings.json` cũ (kể cả bản build đầu của CP2), rồi **rebuild lại từ đầu** bằng `LocalEmbeddingIndex.build()` với code `index.py` đã merge. Kết quả: `persist_path` giờ là `data/chroma` (tương đối, portable giữa các máy trong nhóm), 24/24 document, đã re-run đủ semantic search/lookup/agent smoke test ở trên và đều pass. Dọn thêm 1 folder Chroma mồ côi phát sinh giữa 2 lần build (xác nhận qua bảng `segments` trước khi xoá). Đã `git commit` hoàn tất merge (chưa `push`).
+
 ## Trạng thái
 
 - [x] CP0: đọc contract, chốt embedding model/collection naming/metadata, chuẩn bị smoke query
