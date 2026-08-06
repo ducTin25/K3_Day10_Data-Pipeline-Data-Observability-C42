@@ -21,7 +21,7 @@
 
 ## 2. Tóm tắt kết quả
 
-Nhóm đã hoàn thành baseline pipeline từ snapshot Crossref đến clean dataset, MiniLM embeddings, ChromaDB, evaluation, quality/freshness checks và báo cáo Markdown. Lần chạy được xác minh sử dụng 24 raw records, giữ lại 24 clean records, tạo collection `papers-baseline` gồm 24 documents và bộ test cố định gồm 24 câu hỏi. Baseline đạt `retrieval_hit_rate=1.000`, `mean_token_f1=0.575`, `judge_accuracy=0.542` và `mean_judge_score=3.083`; data quality đạt PASS và freshness đạt FRESH. Các artifact chính gồm raw response/records, clean CSV/JSON, embedding manifest/Chroma index, test set, answer-level evidence, metrics, quality/freshness JSON và `phase1_report.md`. Nhóm cũng đã tạo corruption log với các lỗi drop record, blank summary, noise, truncate title, stale date và duplicate. Corrupted quality chuyển sang FAIL với hai duplicate rows, ba summary không đạt và một stale row; rebuild từ raw snapshot đưa repaired quality về PASS và khôi phục 24 records. Tuy nhiên, corruption flow orchestration và corrupted/repaired agent evaluation chưa hoàn tất, vì vậy chưa thể kết luận metric nào của RAG giảm hoặc phục hồi. Đây là blocker chính trước khi hoàn tất so sánh ba trạng thái.
+Nhóm đã hoàn thành cả baseline và corruption/repair pipeline trên snapshot Crossref gồm 24 records. Baseline tạo 24 clean records, collection `papers-baseline` gồm 24 documents và fixed test set 24 câu; đạt `retrieval_hit_rate=1.000`, `mean_token_f1=0.575`, `judge_accuracy=0.542`, `mean_judge_score=3.083`, quality PASS và freshness FRESH. Corruption flow tạo có chủ đích các lỗi drop latest, blank summary, noise, truncate title, stale date và duplicate; lưu 23 rows vào collection riêng `papers-corrupted` và evaluate bằng đúng test set baseline. Corruption làm retrieval hit rate giảm còn 0.667, token F1 còn 0.370, judge accuracy còn 0.375; quality chuyển sang FAIL và freshness thành STALE. Repair rebuild dữ liệu từ trusted raw snapshot, tạo 24 rows trong `papers-repaired`, đưa retrieval hit rate và token F1 trở lại đúng baseline, quality về PASS và freshness về FRESH. Judge accuracy phục hồi một phần lên 0.500, còn mean judge score tăng lên 3.167. Ba collection và toàn bộ manifests/answers/metrics/freshness reports dùng path riêng; flow kiểm tra hash artifact và nội dung collection baseline để phát hiện ghi đè. Giới hạn còn lại là chưa cô lập tác động của từng corruption scenario và Ragas vẫn bị tắt.
 
 ## 3. Kiến trúc và luồng dữ liệu
 
@@ -35,7 +35,7 @@ Crossref REST API / frozen raw snapshot
     -> quality + freshness
     -> phase1 Markdown report
     -> corruption/repaired datasets (đã có data-quality evidence)
-    -> corrupted/repaired evaluation + comparison report (chưa hoàn tất)
+    -> corrupted/repaired evaluation + comparison report
 ```
 
 ### Trách nhiệm của từng khối
@@ -72,6 +72,7 @@ Không ghi API key hoặc nội dung `.env` trong báo cáo.
 python -m uv sync --extra dev
 python -m uv run pytest -q
 python -m uv run python script/run_phase1.py
+python -m uv run python script/run_corruption_flow.py
 ```
 
 ### Kết quả tái hiện
@@ -80,7 +81,7 @@ python -m uv run python script/run_phase1.py
 | --- | --- | --- | --- |
 | Baseline pipeline | Thành công, exit code 0 | 2026-08-06 12:06 (Asia/Saigon) | `data/results/baseline_metrics.json`, `data/reports/phase1_report.md` |
 | Test suite | Thành công, 13 tests passed | 2026-08-06 | Output pytest và commit merge baseline |
-| Corruption flow | Chưa chạy end-to-end | Chưa có | `src/pipelines/corruption_flow.py` còn `NotImplementedError`; thiếu corrupted metrics/comparison report |
+| Corruption flow | Thành công, exit code 0 | 2026-08-06 | `data/results/corrupted_metrics.json`, `repaired_metrics.json`, `data/reports/corruption_report.md` |
 
 ## 5. Ingestion, cleaning và data contract
 
@@ -132,7 +133,7 @@ python -m uv run python script/run_phase1.py
 | Vector store/collection | ChromaDB persistent, cosine HNSW, `papers-baseline`, 24 documents |
 | Retrieval `top_k` | 4 |
 | LLM provider/model | OpenAI / `gpt-4o-mini` |
-| Test set dùng chung cho ba trạng thái | `data/eval/test_set.json`; đã cố định nhưng chưa chạy đủ corrupted/repaired evaluation |
+| Test set dùng chung cho ba trạng thái | `data/eval/test_set.json`; 24 samples được dùng nguyên vẹn cho cả ba evaluations |
 
 Giữ nguyên test set giúp mọi thay đổi metric phản ánh thay đổi dataset/index thay vì thay đổi câu hỏi hoặc ground truth. Đây là điều kiện bắt buộc trước khi so sánh baseline, corrupted và repaired.
 
@@ -187,27 +188,27 @@ Giữ nguyên test set giúp mọi thay đổi metric phản ánh thay đổi da
 
 | Corruption | Cách tạo | Record bị tác động | Quality signal thực tế | Tác động agent | Repair |
 | --- | --- | ---: | --- | --- | --- |
-| Drop latest | Xóa hai paper mới nhất | 2 | Row count 24 → 23 sau khi cộng một duplicate | Chưa đo | Rebuild từ raw snapshot |
-| Blank summary | Làm rỗng summary | 2 | Summary check FAIL; tổng 3 rows dưới ngưỡng | Chưa đo | Re-clean từ raw |
-| Inject noise | Thêm nhiễu vào embedding text | 2 | Không có check chuyên biệt | Chưa đo | Re-clean từ raw |
-| Truncate title | Cắt ngắn title | 2 | Title vẫn non-null nên check hiện tại không bắt được | Chưa đo | Re-clean từ raw |
-| Old publication date | Làm cũ ngày xuất bản | 1 | Freshness FAIL, 1 stale row | Chưa đo | Re-clean từ raw |
-| Duplicate row | Thêm một row trùng ID | 1 | Uniqueness FAIL, 2 duplicate rows | Chưa đo | Re-clean/dedupe từ raw |
+| Drop latest | Xóa hai paper mới nhất | 2 | Row count 24 → 23 sau khi cộng một duplicate | Đo trong tác động tổng hợp, chưa cô lập scenario | Rebuild từ raw snapshot |
+| Blank summary | Làm rỗng summary | 2 | Summary check FAIL; tổng 3 rows dưới ngưỡng | Đo trong tác động tổng hợp, chưa cô lập scenario | Re-clean từ raw |
+| Inject noise | Thêm nhiễu vào embedding text | 2 | Không có check chuyên biệt | Đo trong tác động tổng hợp, chưa cô lập scenario | Re-clean từ raw |
+| Truncate title | Cắt ngắn title | 2 | Title vẫn non-null nên check hiện tại không bắt được | Đo trong tác động tổng hợp, chưa cô lập scenario | Re-clean từ raw |
+| Old publication date | Làm cũ ngày xuất bản | 1 | Freshness FAIL, 1 stale row | Đo trong tác động tổng hợp, chưa cô lập scenario | Re-clean từ raw |
+| Duplicate row | Thêm một row trùng ID | 1 | Uniqueness FAIL, 2 duplicate rows | Đo trong tác động tổng hợp, chưa cô lập scenario | Re-clean/dedupe từ raw |
 
-Corruption log tồn tại tại `data/results/corruption_log.json` và ghi loại lỗi, count, affected paper IDs. Repaired dataset có 24 records và `repaired_quality.json` đạt PASS; `repaired_metrics.json` hiện chỉ là data-recovery summary, chưa phải RAG evaluation metrics. Repair được thực hiện bằng cách rebuild từ `data/raw/crossref_records.json`, không chỉnh tay corrupted answers hay metrics.
+Corruption log tồn tại tại `data/results/corruption_log.json` và ghi loại lỗi, count, affected paper IDs. Repaired dataset có 24 records, `repaired_quality.json` đạt PASS và `repaired_metrics.json` chứa RAG evaluation metrics chuẩn. Repair được thực hiện bằng cách rebuild từ `data/raw/crossref_records.json`, không chỉnh tay corrupted answers hay metrics.
 
 ## 10. So sánh baseline, corrupted và repaired
 
 | Metric/signal | Baseline | Corrupted | Repaired | Nhận xét |
 | --- | ---: | ---: | ---: | --- |
-| `retrieval_hit_rate` | 1.000 | N/A | N/A | Chưa evaluate corrupted/repaired bằng fixed test set |
-| `mean_token_f1` | 0.575 | N/A | N/A | Chưa đủ bằng chứng tính delta |
-| `judge_accuracy` | 0.542 | N/A | N/A | Chưa đủ bằng chứng tính recovery |
-| `mean_judge_score` | 3.083 | N/A | N/A | Chưa đủ bằng chứng tính recovery |
+| `retrieval_hit_rate` | 1.000 | 0.667 | 1.000 | Corruption −0.333; repair +0.333, phục hồi hoàn toàn |
+| `mean_token_f1` | 0.575 | 0.370 | 0.575 | Corruption −0.205; repair +0.205, phục hồi hoàn toàn |
+| `judge_accuracy` | 0.542 | 0.375 | 0.500 | Corruption −0.167; repair +0.125, chưa phục hồi hoàn toàn |
+| `mean_judge_score` | 3.083 | 2.792 | 3.167 | Corruption −0.292; repair +0.375, cao hơn baseline 0.083 |
 | Quality | PASS | FAIL | PASS | Data-level corruption được phát hiện và repair |
 | Freshness signal | FRESH | FAIL: 1 stale | PASS: 0 stale | Dựa trên quality check; chưa có freshness report riêng cho từng trạng thái |
 
-Kết luận hiện được artifact hỗ trợ: corruption tạo duplicate/summary lỗi/stale date → quality chuyển từ PASS sang FAIL; rebuild clean dataset từ trusted raw snapshot → row count trở lại 24 và repaired quality trở lại PASS. Chưa kết luận corruption làm giảm agent performance hoặc repair phục hồi agent metrics vì thiếu `corrupted_metrics.json`, repaired RAG metrics và answer artifacts tương ứng.
+Kết luận được artifact hỗ trợ: (1) corruption làm mất/biến dạng corpus, đồng thời tạo duplicate, summary lỗi và stale date → quality/freshness chuyển PASS/FRESH thành FAIL/STALE → retrieval hit rate giảm 0.333 và token F1 giảm 0.205; (2) rebuild từ trusted raw snapshot → row count/uniqueness/freshness trở lại baseline → retrieval hit rate và token F1 phục hồi hoàn toàn. Judge metrics có dao động do LLM evaluator, vì vậy nhóm chỉ báo cáo mức phục hồi quan sát được và không khẳng định repaired judge accuracy phục hồi hoàn toàn.
 
 ## 11. Vấn đề tích hợp quan trọng
 
@@ -220,7 +221,7 @@ Kết luận hiện được artifact hỗ trợ: corruption tạo duplicate/sum
 
 | Giới hạn hiện tại | Ảnh hưởng | Hướng cải thiện có thể kiểm chứng |
 | --- | --- | --- |
-| Corruption flow còn `NotImplementedError` | Chưa có corrupted/repaired RAG metrics và comparison report | Hoàn thiện flow, dùng lại fixed test set, tạo answers/metrics cho hai trạng thái và chạy comparison |
+| Nhiều corruption được áp dụng cùng lúc | Không cô lập được scenario nào gây giảm metric nhiều nhất | Chạy ablation: mỗi lần chỉ bật một corruption và dùng cùng test set/evaluator |
 | Ragas bị tắt | Chưa có faithfulness/context precision/recall | Chạy `RUN_RAGAS=1`, lưu kết quả và chi phí/thời gian |
 | 24/24 records thiếu categories từ Crossref | Category questions có ít ground truth hoặc bị bỏ qua tùy record | Thêm query/source có subject hoặc báo coverage theo question type |
 | Quality checks chưa bắt noise/truncated title | Một số corruption không tạo signal trực tiếp | Thêm distribution/length/outlier checks và kiểm tra thay đổi so với baseline |
@@ -231,8 +232,8 @@ Kết luận hiện được artifact hỗ trợ: corruption tạo duplicate/sum
 - [x] Thông tin nhóm và repository chính xác.
 - [x] Phân công khớp với module, artifact và kết quả hiện có.
 - [x] Baseline đã được chạy lại trên phiên bản hiện tại.
-- [ ] Baseline, corrupted và repaired đã được evaluate bằng cùng test set.
-- [ ] Bảng ba trạng thái khớp đầy đủ với `data/results/` — corrupted/repaired RAG metrics còn thiếu.
+- [x] Baseline, corrupted và repaired đã được evaluate bằng cùng test set.
+- [x] Bảng ba trạng thái khớp với `data/results/` và comparison report.
 - [x] Baseline quality/freshness conclusions khớp `data/quality/`.
 - [x] Các đường dẫn baseline và artifact truy cập được.
 - [ ] Mỗi thành viên đã hoàn thành báo cáo vai trò riêng.

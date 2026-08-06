@@ -9,8 +9,41 @@ import pandas as pd
 
 from core.config import Settings
 from core.utils import read_json, safe_slug, write_json
-from ingestion.cleaning import assert_clean_contract
 from retrieval.embeddings import MiniLMEmbeddings
+
+
+INDEX_REQUIRED_COLUMNS = {
+    "paper_id",
+    "title",
+    "text_for_embedding",
+    "published",
+    "authors_joined",
+    "categories_joined",
+    "summary",
+    "abs_url",
+    "pdf_url",
+}
+
+
+def assert_index_contract(df: pd.DataFrame) -> None:
+    """Require indexable structure while allowing intentional quality failures.
+
+    Corrupted datasets may contain duplicate paper IDs, short summaries, or
+    stale dates. Those are quality signals, not structural reasons to patch or
+    skip the experiment. Chroma record IDs remain unique via the row index.
+    """
+    missing = sorted(INDEX_REQUIRED_COLUMNS - set(df.columns))
+    if missing:
+        raise ValueError(f"Index contract failed; missing columns: {', '.join(missing)}")
+    if df.empty:
+        raise ValueError("Index contract failed; dataframe is empty.")
+    for column in ("paper_id", "title", "text_for_embedding"):
+        values = df[column]
+        invalid = values.isna() | values.astype(str).str.strip().eq("")
+        if invalid.any():
+            raise ValueError(
+                f"Index contract failed; {column} has {int(invalid.sum())} blank row(s)."
+            )
 
 
 @dataclass(frozen=True)
@@ -88,7 +121,7 @@ class LocalEmbeddingIndex:
         settings: Settings,
         embeddings_output_path: Path | None = None,
     ) -> "LocalEmbeddingIndex":
-        assert_clean_contract(df)
+        assert_index_contract(df)
         collection_name = cls._derive_collection_name(settings, embeddings_output_path)
         documents = cls._build_documents(df)
         persist_path = settings.paths.chroma_dir
