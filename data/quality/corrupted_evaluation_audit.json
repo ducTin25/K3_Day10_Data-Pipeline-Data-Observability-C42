@@ -1,0 +1,69 @@
+{
+  "checkpoint": "CP5",
+  "generated_at": "2026-08-06T05:37:46.177972+00:00",
+  "fixed_test_set": "C:\\Users\\aceto\\PycharmProjects\\VinUni-AI-in-Action\\Lab-Day10\\K3_Day10_Data-Pipeline-Data-Observability-C42\\data\\eval\\test_set.json",
+  "test_set_unchanged": true,
+  "baseline_samples": 24,
+  "corrupted_samples": 24,
+  "metric_deltas_corrupted_minus_baseline": {
+    "retrieval_hit_rate": -0.33333333333333337,
+    "mean_token_f1": -0.20508430317510945,
+    "judge_accuracy": -0.16666666666666663,
+    "mean_judge_score": -0.29166666666666696
+  },
+  "quality_passed": false,
+  "freshness_is_fresh": false,
+  "corruption_steps": [
+    "drop_latest_records",
+    "blank_summary",
+    "inject_noise",
+    "truncate_title",
+    "old_published_date",
+    "add_duplicate_rows"
+  ],
+  "hit_to_miss_count": 8,
+  "hit_to_miss_example": {
+    "id": "eval-009",
+    "question_type": "summary",
+    "question": "What does the paper 'Hi\u2010 RAG : A Hierarchical Retrieval\u2010Augmented Generation Framework for Scalable and Generalisable Tool Selection in Large Language Model Agents' discuss?",
+    "ground_truth_doc_ids": [
+      "10.1111/exsy.70341"
+    ],
+    "baseline_retrieved_doc_ids": [
+      "10.1111/exsy.70341",
+      "10.36227/techrxiv.177272838.89432844/v1",
+      "10.20944/preprints202604.0339.v1",
+      "10.63646/kpqm1958"
+    ],
+    "corrupted_retrieved_doc_ids": [
+      "10.36227/techrxiv.177272838.89432844/v1",
+      "10.20944/preprints202604.0339.v1",
+      "10.63646/kpqm1958",
+      "10.32473/flairs.39.1.141782"
+    ],
+    "baseline_answer": "ABSTRACT As tool repositories for Large Language Model (LLM) agents grow from dozens to hundreds of endpoints, flat retrieval paradigms that treat the repository as an unstructured list suffer from context overload, cross\u2010domain semantic collision and degraded selection accuracy.",
+    "corrupted_answer": "Retrieval-Augmented Generation (RAG) has emerged as a powerful paradigm for combining large language models with external knowledge sources to produce accurate, context-aware, and verifiable outputs."
+  },
+  "judge_mode": [
+    "The model answer accurately summarizes the key points of the reference answer, including the purpose of the study, the implementation of the JADE-Plus system, its evaluation metrics, and the performance results. It captures the essence of the research and its significance in the context of diagnosing jawbone lesions.",
+    "The model answer captures the main idea of integrating retrieval-augmented mechanisms into large language model agents for literature review generation, but it lacks detail and does not address the limitations of traditional models, the framework components, or the experimental validation of the method's effectiveness. It is too brief to be considered materially correct.",
+    "The model answer does not address the content of the paper regarding the Microsoft Azure AI/machine learning hackathon or its focus on retrieval-augmented generation large language models. Instead, it discusses the evolution of large language models in a general context, which is not relevant to the specific topic of the paper.",
+    "The model answer does not provide any categories assigned to the paper, which is the key information requested in the question. The reference answer is also empty, indicating that no categories were provided. Therefore, the model answer fails to address the question.",
+    "The model answer does not provide any categories assigned to the paper, which is the key information requested in the question. The reference answer is also empty, indicating that no categories were provided. Therefore, the model answer is not materially correct.",
+    "The model answer does not provide any categories assigned to the paper, which is the main requirement of the question. The reference answer is also empty, indicating that no categories were provided. Therefore, the model answer fails to address the question adequately.",
+    "The model answer does not provide any categories assigned to the paper, which is the main requirement of the question. The reference answer is also empty, indicating that no categories were provided. Therefore, the model answer is not materially correct.",
+    "The model answer is close to the reference answer but is not materially correct as it provides a different date (June 30 vs. August 1).",
+    "The model answer is very close to the reference answer, being only one day off. However, it is not materially correct as it does not match the exact publication date.",
+    "The model answer lists authors who are not mentioned in the reference answer, indicating a complete mismatch.",
+    "The model answer matches the reference answer exactly, listing all authors correctly.",
+    "The model answer matches the reference answer exactly, providing all the authors' names correctly.",
+    "The model answer matches the reference answer exactly, providing all the authors' names in the correct order.",
+    "The model answer matches the reference answer exactly, providing the correct authors of the paper.",
+    "The model answer matches the reference answer exactly, providing the correct publication date.",
+    "The model answer only partially addresses the topic by mentioning the demand for Clinical Decision Support Systems (CDSS) but fails to discuss the key aspects of the paper, such as the limitations of Large Language Models (LLMs), the introduction of Enhanced Clinical RAG-LLM (ECRAG-LLM), and the specific innovations and results presented in the reference answer.",
+    "The model answer only provides a partial overview of the paper, mentioning the introduction and the issue of hallucinations in LLMs, but it fails to cover the key aspects such as the evaluation of RAG, the specific models tested, the results, and the conclusions drawn from the study. It lacks detail and does not adequately summarize the main findings or the methodology.",
+    "The model answer provides a general overview of Retrieval-Augmented Generation (RAG) but fails to address the specific details and contributions of the Hi-RAG framework discussed in the reference answer. It lacks mention of the hierarchical structure, the specific retrieval strategies, the benchmark introduced, and the experimental results, which are crucial to understanding the paper's focus.",
+    "The model answer provides an incorrect author name, while the reference answer correctly identifies the authors as Wei Tian and Yuhao Zhou."
+  ],
+  "interpretation": "Observed degradation is supported by both retrieval/answer metrics and quality/freshness failures."
+}
