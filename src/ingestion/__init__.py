@@ -6,6 +6,8 @@ from .crossref import (
     fetch_source_records,
     load_raw_records,
     parse_crossref_payload,
+    trace_paper_lineage,
+    write_paper_lineage_evidence,
     write_raw_lineage_handoff,
 )
 from .repair import repair_data_from_raw
