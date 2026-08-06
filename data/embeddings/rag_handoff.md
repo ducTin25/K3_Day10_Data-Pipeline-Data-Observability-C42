@@ -47,12 +47,14 @@ Nguồn: `data/clean/papers_clean.csv` / `papers_clean.json` (24 records, do Vai
 - Dọn 2 folder Chroma mồ côi (`cb674a12-...` của bản build lỗi cũ, `0e31576b-...` của lần build nháp) — đã xác nhận qua bảng `segments` trong `chroma.sqlite3` rằng folder đang thật sự dùng là `6e3c438e-8b89-45c8-ad68-742e914cc6df` trước khi xoá.
 
 **Test semantic_search** (2 query đã chuẩn bị từ CP0), trả về kết quả có điểm số và nguồn hợp lý:
+
 - "What are recent papers about retrieval augmented generation for agents?" -> top1 `10.63646/kpqm1958` (score 0.60)
 - "How do LLM agents use retrieval tools?" -> top1 `10.70121/001c.158711` (score 0.48)
 
 **Test lookup** (exact match): theo `paper_id` -> tìm thấy; theo title chính xác -> tìm thấy; giá trị không tồn tại -> trả `None` đúng như kỳ vọng.
 
 **Test agent** (dùng câu hỏi thật `eval-002` từ `data/eval/test_set.json`, loại `authors`):
+
 - Câu hỏi: "Who authored the paper 'JADE-Plus...'?"
 - Ground truth: `Soroush Baseri Saadi, Jonas Ver Berne, Rocharles Cavalcante Fontenele, Peter Claes, Reinhilde Jacobs`
 - Agent trả lời đúng đủ cả 5 tác giả, đã gọi tool (`lookup_paper`/`semantic_search_papers`) trước khi trả lời theo đúng system prompt, không bịa ngoài corpus.
@@ -69,9 +71,28 @@ Sau khi build lần đầu, `git pull` mang về 6 commit từ team (bao gồm b
 
 Không hand-merge JSON/binary sinh ra từ code — xoá sạch toàn bộ `data/chroma/` và `papers_embeddings.json` cũ (kể cả bản build đầu của CP2), rồi **rebuild lại từ đầu** bằng `LocalEmbeddingIndex.build()` với code `index.py` đã merge. Kết quả: `persist_path` giờ là `data/chroma` (tương đối, portable giữa các máy trong nhóm), 24/24 document, đã re-run đủ semantic search/lookup/agent smoke test ở trên và đều pass. Dọn thêm 1 folder Chroma mồ côi phát sinh giữa 2 lần build (xác nhận qua bảng `segments` trước khi xoá). Đã `git commit` hoàn tất merge (chưa `push`).
 
+## CHECKPOINT 3 — Xác nhận baseline, demo search/lookup, kiểm tra agent không vượt corpus
+
+Việc riêng của vai trò rag ở CP3 không phụ thuộc ai (tách biệt với pass-criteria chung của cả checkpoint — xem phần "Dependency" bên dưới).
+
+1. **Xác nhận `papers-baseline` khớp clean dataset:** so `paper_id` set giữa `papers_clean.csv` (24 dòng) và `documents` trong `papers_embeddings.json` — khớp 100%. `embedding_model` và `collection_name` đúng theo `settings`.
+2. **Demo semantic search + exact lookup** (dùng cho team):
+   - Semantic: "What are recent papers about retrieval augmented generation for agents?" -> top1 `10.63646/kpqm1958` "The Age of Autonomous Agents..." (score 0.60)
+   - Exact lookup: `paper_id=10.1111/exsy.70341` -> tìm đúng title/authors/published.
+3. **Kiểm tra agent không vượt corpus:**
+   - Câu hỏi trong corpus ("Who authored 'JADE-Plus...'?") -> agent trả lời đúng 5/5 tác giả, dùng tool.
+   - Câu hỏi ngoài corpus ("What is the capital city of France?") -> **phát hiện lỗi**: agent trả lời thẳng "Paris" bằng kiến thức nền LLM, không gọi tool, không từ chối. Vi phạm system prompt cũ ("Use tools before answering factual questions" — không đủ chặt, LLM tự quyết câu hỏi không cần tool).
+
+   **Đã sửa** `src/retrieval/agent.py` system_prompt: bắt buộc gọi tool cho MỌI câu hỏi kể cả câu có vẻ ngoài corpus, chỉ dùng thông tin tool trả về, từ chối rõ ràng nếu tool không hỗ trợ. Re-test sau khi sửa: agent trả lời đúng "The indexed corpus does not cover the question about the capital city of France." — đạt.
+
+### Dependency của cả CHECKPOINT 3 (không chỉ việc của rag)
+
+Pass-criteria CP3 cấp team (`baseline_metrics.json`, `answers`, quality/freshness, `phase1_report.md`) phụ thuộc vào Vai trò 1 (lead) implement + chạy `uv run python script/run_phase1.py`. Tại thời điểm ghi nhận, `src/pipelines/phase1.py::main()` **vẫn còn `NotImplementedError`** — 3 việc riêng của rag ở trên không bị chặn, nhưng checkpoint chưa "xong" ở cấp team. Sau khi lead chạy `phase1.py` (có thể tự rebuild lại index), cần re-run script xác nhận CP2/CP3 để đảm bảo `papers-baseline` vẫn khớp.
+
 ## Trạng thái
 
 - [x] CP0: đọc contract, chốt embedding model/collection naming/metadata, chuẩn bị smoke query
 - [x] CP1: xác minh schema + chất lượng `text_for_embedding` trên dữ liệu clean thật, phát hiện và ghi nhận embeddings manifest lỗi cần rebuild
 - [x] CP2: build `papers-baseline` đầy đủ (24/24 doc), smoke test semantic search + lookup + agent đều pass
-- [ ] CP3+: chờ baseline pipeline (`phase1.py`, do lead phụ trách) chạy end-to-end để có `baseline_metrics.json` chính thức
+- [x] CP3: xác nhận baseline khớp clean data, demo search/lookup, phát hiện + sửa lỗi agent trả lời ngoài corpus. Lead đã chạy xong `phase1.py` end-to-end: `data/results/baseline_metrics.json` (`retrieval_hit_rate=1.0`, `mean_token_f1=0.575`, `judge_accuracy=0.5`, `mean_judge_score=3.17`), `baseline_answers.json` và `data/reports/phase1_report.md` đã tồn tại.
+- [ ] CP4+: re-verify `papers-baseline` sau khi merge/rebuild để đảm bảo vẫn khớp 24/24 record trước khi sang corruption flow

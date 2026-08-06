@@ -43,8 +43,11 @@ def build_agent(settings: Settings, index: LocalEmbeddingIndex):
         tools=[semantic_search_papers, lookup_paper],
         system_prompt=(
             "You answer questions about the indexed scholarly paper corpus sourced from Crossref. "
-            "Use tools before answering factual questions. "
-            "If the indexed corpus does not support the answer, say so clearly."
+            "You must call semantic_search_papers or lookup_paper for every question before answering, "
+            "even if the question seems unrelated to the corpus or answerable from general knowledge. "
+            "Only use information returned by the tools. "
+            "If the tool results do not support the answer, say clearly that the indexed corpus does not "
+            "cover this question instead of answering from outside knowledge."
         ),
         name="paper_corpus_agent",
     )

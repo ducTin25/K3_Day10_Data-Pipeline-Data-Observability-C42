@@ -1,8 +1,8 @@
 # Crossref raw-lineage handoff
 
-- Raw API snapshot: `D:\AI20K\codelabs\K3_Day10_Data-Pipeline-Data-Observability-C42\data\raw\crossref_response.json`
-- Parsed PaperRecord snapshot: `D:\AI20K\codelabs\K3_Day10_Data-Pipeline-Data-Observability-C42\data\raw\crossref_records.json`
-- Lineage audit: `D:\AI20K\codelabs\K3_Day10_Data-Pipeline-Data-Observability-C42\data\raw\crossref_lineage_report.json`
+- Raw API snapshot: `C:\Users\Admin\Downloads\CodeLab10\K3_Day10_Data-Pipeline-Data-Observability-C42\data\raw\crossref_response.json`
+- Parsed PaperRecord snapshot: `C:\Users\Admin\Downloads\CodeLab10\K3_Day10_Data-Pipeline-Data-Observability-C42\data\raw\crossref_records.json`
+- Lineage audit: `C:\Users\Admin\Downloads\CodeLab10\K3_Day10_Data-Pipeline-Data-Observability-C42\data\raw\crossref_lineage_report.json`
 - Snapshot matches reparse: `True`
 - Cleaning input ready: `True`
 - `paper_id` is the canonicalized DOI; use it as the stable key for repair and comparison.

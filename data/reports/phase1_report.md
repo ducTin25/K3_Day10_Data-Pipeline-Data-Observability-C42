@@ -2,9 +2,20 @@
 
 ## Source
 
+<<<<<<< HEAD
 - source_api: Crossref REST API
 - source_query: agentic retrieval augmented generation large language model
 - clean_rows: 24
+=======
+- source: Crossref REST API
+- raw_mode: snapshot
+- query: agentic retrieval augmented generation large language model
+- filter: from-pub-date:2026-02-07,has-abstract:true
+- raw_records: 24
+- clean_records: 24
+- indexed_documents: 24
+- test_samples: 24
+>>>>>>> 331be281d443b25248ca64ac4e9a1f582a169606
 - collection: papers-baseline
 
 ## Evaluation metrics
@@ -17,6 +28,7 @@
 | judge_accuracy | 0.542 |
 | mean_judge_score | 3.083 |
 
+<<<<<<< HEAD
 ## How to read the metrics
 
 - `retrieval_hit_rate`: proportion of questions whose retrieved documents contain a ground-truth document ID.
@@ -26,6 +38,8 @@
 
 The baseline retrieval hit rate is 1.000. No retrieval misses were observed in this run.
 
+=======
+>>>>>>> 331be281d443b25248ca64ac4e9a1f582a169606
 ## Data quality
 
 - Overall status: **PASS**
