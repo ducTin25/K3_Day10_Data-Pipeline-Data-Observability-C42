@@ -25,7 +25,7 @@
     "judge": {
       "score": 1,
       "correct": false,
-      "reasoning": "The model answer only provides the introductory sentence of the reference answer and fails to cover the key aspects of the study, such as the development and validation of the JADE-Plus framework, its components, evaluation methods, and performance results."
+      "reasoning": "Fallback heuristic judge used because the LLM evaluator was unavailable."
     }
   },
   {
@@ -54,7 +54,7 @@
     "judge": {
       "score": 5,
       "correct": true,
-      "reasoning": "The model answer matches the reference answer exactly, providing all the authors' names correctly."
+      "reasoning": "Fallback heuristic judge used because the LLM evaluator was unavailable."
     }
   },
   {
@@ -83,7 +83,7 @@
     "judge": {
       "score": 5,
       "correct": true,
-      "reasoning": "The model answer matches the reference answer exactly, providing the correct publication date."
+      "reasoning": "Fallback heuristic judge used because the LLM evaluator was unavailable."
     }
   },
   {
@@ -112,7 +112,7 @@
     "judge": {
       "score": 1,
       "correct": false,
-      "reasoning": "The model answer does not provide any categories assigned to the paper, which is the key information requested in the question. The reference answer is also empty, indicating that no categories were provided. Therefore, the model answer is not materially correct."
+      "reasoning": "Fallback heuristic judge used because the LLM evaluator was unavailable."
     }
   },
   {
@@ -139,9 +139,9 @@
     "retrieval_hit": true,
     "token_f1": 0.17796610169491525,
     "judge": {
-      "score": 2,
+      "score": 1,
       "correct": false,
-      "reasoning": "The model answer only provides a partial overview of the paper, mentioning the introduction and the issue of hallucinations in LLMs, but fails to cover the study's methods, results, and conclusions. It lacks critical details about the evaluation of RAG, the specific models tested, and the performance metrics, which are essential for a comprehensive understanding of the paper's findings."
+      "reasoning": "Fallback heuristic judge used because the LLM evaluator was unavailable."
     }
   },
   {
@@ -170,7 +170,7 @@
     "judge": {
       "score": 5,
       "correct": true,
-      "reasoning": "The model answer matches the reference answer exactly, listing all authors correctly."
+      "reasoning": "Fallback heuristic judge used because the LLM evaluator was unavailable."
     }
   },
   {
@@ -199,7 +199,7 @@
     "judge": {
       "score": 5,
       "correct": true,
-      "reasoning": "The model answer matches the reference answer exactly, providing the correct publication date."
+      "reasoning": "Fallback heuristic judge used because the LLM evaluator was unavailable."
     }
   },
   {
@@ -228,7 +228,7 @@
     "judge": {
       "score": 1,
       "correct": false,
-      "reasoning": "The model answer does not provide any categories assigned to the paper, which is the key information requested in the question. The reference answer is also empty, indicating that no categories were provided. Therefore, the model answer is not materially correct."
+      "reasoning": "Fallback heuristic judge used because the LLM evaluator was unavailable."
     }
   },
   {
@@ -255,9 +255,9 @@
     "retrieval_hit": true,
     "token_f1": 0.38341968911917096,
     "judge": {
-      "score": 2,
+      "score": 1,
       "correct": false,
-      "reasoning": "The model answer only provides the initial context of the paper but fails to summarize the key contributions, methodology, results, and implications discussed in the reference answer. It lacks critical details about the Hi-RAG framework, its stages, experimental results, and the introduction of MCPBench."
+      "reasoning": "Fallback heuristic judge used because the LLM evaluator was unavailable."
     }
   },
   {
@@ -286,7 +286,7 @@
     "judge": {
       "score": 5,
       "correct": true,
-      "reasoning": "The model answer matches the reference answer exactly, providing the correct authors of the paper."
+      "reasoning": "Fallback heuristic judge used because the LLM evaluator was unavailable."
     }
   },
   {
@@ -315,7 +315,7 @@
     "judge": {
       "score": 5,
       "correct": true,
-      "reasoning": "The model answer matches the reference answer exactly, providing the correct publication date."
+      "reasoning": "Fallback heuristic judge used because the LLM evaluator was unavailable."
     }
   },
   {
@@ -344,7 +344,7 @@
     "judge": {
       "score": 1,
       "correct": false,
-      "reasoning": "The model answer does not provide any categories assigned to the paper, which is the key information requested in the question. The reference answer is also empty, indicating that no categories were provided. Therefore, the model answer is not materially correct."
+      "reasoning": "Fallback heuristic judge used because the LLM evaluator was unavailable."
     }
   },
   {
@@ -373,7 +373,7 @@
     "judge": {
       "score": 1,
       "correct": false,
-      "reasoning": "The model answer only partially addresses the topic by mentioning the demand for Clinical Decision Support Systems (CDSS) but fails to discuss the key aspects of the paper, such as the limitations of Large Language Models (LLMs), the introduction of Enhanced Clinical RAG-LLM (ECRAG-LLM), and the specific innovations and results presented in the reference answer."
+      "reasoning": "Fallback heuristic judge used because the LLM evaluator was unavailable."
     }
   },
   {
@@ -402,7 +402,7 @@
     "judge": {
       "score": 5,
       "correct": true,
-      "reasoning": "The model answer matches the reference answer exactly, providing the correct authors of the paper."
+      "reasoning": "Fallback heuristic judge used because the LLM evaluator was unavailable."
     }
   },
   {
@@ -431,7 +431,7 @@
     "judge": {
       "score": 5,
       "correct": true,
-      "reasoning": "The model answer matches the reference answer exactly, providing the correct publication date."
+      "reasoning": "Fallback heuristic judge used because the LLM evaluator was unavailable."
     }
   },
   {
@@ -460,7 +460,7 @@
     "judge": {
       "score": 1,
       "correct": false,
-      "reasoning": "The model answer does not provide any categories assigned to the paper, which is the main requirement of the question. The reference answer is also empty, indicating that no categories were provided. Therefore, the model answer is not materially correct."
+      "reasoning": "Fallback heuristic judge used because the LLM evaluator was unavailable."
     }
   },
   {
@@ -487,9 +487,9 @@
     "retrieval_hit": true,
     "token_f1": 0.2303030303030303,
     "judge": {
-      "score": 2,
+      "score": 1,
       "correct": false,
-      "reasoning": "The model answer captures the main idea of integrating retrieval-augmented mechanisms into large language model agents for literature review generation, but it lacks detail and does not address the limitations of traditional models, the framework components, or the experimental validation of the method's effectiveness. It is too brief to be considered materially correct."
+      "reasoning": "Fallback heuristic judge used because the LLM evaluator was unavailable."
     }
   },
   {
@@ -518,7 +518,7 @@
     "judge": {
       "score": 5,
       "correct": true,
-      "reasoning": "The model answer matches the reference answer exactly, providing all the authors' names correctly."
+      "reasoning": "Fallback heuristic judge used because the LLM evaluator was unavailable."
     }
   },
   {
@@ -547,7 +547,7 @@
     "judge": {
       "score": 5,
       "correct": true,
-      "reasoning": "The model answer matches the reference answer exactly, providing the correct publication date."
+      "reasoning": "Fallback heuristic judge used because the LLM evaluator was unavailable."
     }
   },
   {
@@ -576,7 +576,7 @@
     "judge": {
       "score": 1,
       "correct": false,
-      "reasoning": "The model answer does not provide any categories assigned to the paper, which is the key information requested in the question. The reference answer is also empty, indicating that no categories were provided. Therefore, the model answer is not materially correct."
+      "reasoning": "Fallback heuristic judge used because the LLM evaluator was unavailable."
     }
   },
   {
@@ -603,9 +603,9 @@
     "retrieval_hit": true,
     "token_f1": 0.56,
     "judge": {
-      "score": 2,
-      "correct": false,
-      "reasoning": "The model answer only partially addresses the topic of the paper by mentioning the US Army Corps of Engineers' mission but fails to discuss the specific focus on the Microsoft Azure AI/machine learning hackathon or the development of retrieval-augmented generation large language models, which is the main subject of the reference answer."
+      "score": 3,
+      "correct": true,
+      "reasoning": "Fallback heuristic judge used because the LLM evaluator was unavailable."
     }
   },
   {
@@ -634,7 +634,7 @@
     "judge": {
       "score": 5,
       "correct": true,
-      "reasoning": "The model answer matches the reference answer exactly, providing all the authors' names correctly."
+      "reasoning": "Fallback heuristic judge used because the LLM evaluator was unavailable."
     }
   },
   {
@@ -663,7 +663,7 @@
     "judge": {
       "score": 5,
       "correct": true,
-      "reasoning": "The model answer matches the reference answer exactly, providing the correct publication date."
+      "reasoning": "Fallback heuristic judge used because the LLM evaluator was unavailable."
     }
   },
   {
@@ -692,7 +692,7 @@
     "judge": {
       "score": 1,
       "correct": false,
-      "reasoning": "The model answer does not provide any categories assigned to the paper, which is the main requirement of the question. The reference answer is also empty, indicating that no categories were provided. Therefore, the model answer is not materially correct."
+      "reasoning": "Fallback heuristic judge used because the LLM evaluator was unavailable."
     }
   }
 ]
