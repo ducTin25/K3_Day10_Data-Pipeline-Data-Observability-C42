@@ -67,6 +67,8 @@ def generate_corruption_report(
     repaired_quality: dict[str, Any],
     corrupted_freshness: dict[str, Any],
     repaired_freshness: dict[str, Any],
+    lineage_evidence: list[dict[str, Any]] | None = None,
+    case_evidence: dict[str, Any] | None = None,
 ) -> None:
     def delta(metric: str, before: dict[str, Any], after: dict[str, Any]) -> str:
         try:
@@ -78,6 +80,14 @@ def generate_corruption_report(
         f"- {metric}: baseline → corrupted {delta(metric, baseline_metrics, corrupted_metrics)}; corrupted → repaired {delta(metric, corrupted_metrics, repaired_metrics)}"
         for metric in ("retrieval_hit_rate", "mean_token_f1", "judge_accuracy", "mean_judge_score")
     )
+    lineage_evidence = lineage_evidence or []
+    restored = sum(bool(item.get("restored_from_raw")) for item in lineage_evidence)
+    case_evidence = case_evidence or {}
+    states = case_evidence.get("states", {})
+    case_lines = "\n".join(
+        f"| {state.title()} | `{values.get('collection', 'n/a')}` | {values.get('retrieval_hit', 'n/a')} | `{', '.join(values.get('retrieved_doc_ids', []))}` | {values.get('answer', '')} |"
+        for state, values in states.items()
+    ) or "| n/a | n/a | n/a | n/a | n/a |"
     write_text(report_path, f"""# Data Corruption and Repair Report
 
 ## Evaluation comparison
@@ -94,4 +104,25 @@ def generate_corruption_report(
 | --- | --- | --- | ---: |
 | Corrupted | {'PASS' if corrupted_quality.get('passed') else 'FAIL'} | {'FRESH' if corrupted_freshness.get('is_fresh') else 'STALE / INCOMPLETE'} | {corrupted_freshness.get('stale_rows', 'n/a')} |
 | Repaired | {'PASS' if repaired_quality.get('passed') else 'FAIL'} | {'FRESH' if repaired_freshness.get('is_fresh') else 'STALE / INCOMPLETE'} | {repaired_freshness.get('stale_rows', 'n/a')} |
+
+## Raw-to-repair lineage
+
+- Affected document IDs traced to the frozen raw snapshot: {len(lineage_evidence)}.
+- IDs restored exactly once from raw into repaired data: {restored}/{len(lineage_evidence)}.
+
+## Representative retrieval case
+
+- Sample: `{case_evidence.get('sample_id', 'n/a')}`
+- Question: {case_evidence.get('question', 'n/a')}
+- Ground-truth IDs: `{', '.join(case_evidence.get('ground_truth_doc_ids', []))}`
+
+| State | Collection queried | Retrieval hit | Retrieved IDs | Answer |
+| --- | --- | --- | --- | --- |
+{case_lines}
+
+## Interpretation limits
+
+- All corruption scenarios run together, so this report does not attribute the metric delta to one scenario without an ablation run.
+- Judge metrics may vary between LLM calls; comparisons here use artifacts generated in the same run.
+- Ragas remains disabled unless `RUN_RAGAS=1`.
 """)

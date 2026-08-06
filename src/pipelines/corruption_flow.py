@@ -111,6 +111,56 @@ def main() -> None:
         paths.repaired_freshness_report,
     )
 
+    corruption_log = read_json(paths.corruption_log)
+    affected_ids = sorted({
+        str(change["paper_id"])
+        for step in corruption_log.get("steps", [])
+        for change in step.get("changes", [])
+    })
+    raw_ids = {record.paper_id for record in raw_records}
+    corrupted_counts = corrupted_df["paper_id"].astype(str).value_counts().to_dict()
+    repaired_counts = repaired_df["paper_id"].astype(str).value_counts().to_dict()
+    lineage_evidence = [
+        {
+            "paper_id": paper_id,
+            "raw_source": paths.raw_records_json.relative_to(paths.project_dir).as_posix(),
+            "present_in_raw": paper_id in raw_ids,
+            "corrupted_row_count": int(corrupted_counts.get(paper_id, 0)),
+            "repaired_row_count": int(repaired_counts.get(paper_id, 0)),
+            "restored_from_raw": paper_id in raw_ids and repaired_counts.get(paper_id, 0) == 1,
+        }
+        for paper_id in affected_ids
+    ]
+
+    answers_by_state = {
+        "baseline": {item["id"]: item for item in read_json(paths.baseline_answers)},
+        "corrupted": {item["id"]: item for item in read_json(paths.corrupted_answers)},
+        "repaired": {item["id"]: item for item in read_json(paths.repaired_answers)},
+    }
+    common_ids = sorted(set.intersection(*(set(items) for items in answers_by_state.values())))
+    case_id = next(
+        (sample_id for sample_id in common_ids if answers_by_state["baseline"][sample_id].get("retrieval_hit") and not answers_by_state["corrupted"][sample_id].get("retrieval_hit") and answers_by_state["repaired"][sample_id].get("retrieval_hit")),
+        common_ids[0],
+    )
+    case_evidence = {
+        "sample_id": case_id,
+        "question": answers_by_state["baseline"][case_id]["question"],
+        "ground_truth_doc_ids": answers_by_state["baseline"][case_id]["ground_truth_doc_ids"],
+        "states": {
+            state: {
+                "collection": collection,
+                "retrieval_hit": answers_by_state[state][case_id]["retrieval_hit"],
+                "retrieved_doc_ids": answers_by_state[state][case_id]["retrieved_doc_ids"],
+                "answer": answers_by_state[state][case_id]["answer"],
+            }
+            for state, collection in (
+                ("baseline", settings.baseline_collection_name),
+                ("corrupted", settings.corrupted_collection_name),
+                ("repaired", settings.repaired_collection_name),
+            )
+        },
+    }
+
     changed_baseline = [
         path.relative_to(paths.project_dir).as_posix()
         for path, digest in baseline_hashes.items()
@@ -153,6 +203,8 @@ def main() -> None:
                 "corrupted": paths.corrupted_metrics.relative_to(paths.project_dir).as_posix(),
                 "repaired": paths.repaired_metrics.relative_to(paths.project_dir).as_posix(),
             },
+            "lineage_evidence": lineage_evidence,
+            "representative_case": case_evidence,
         },
     )
 
@@ -165,6 +217,8 @@ def main() -> None:
         repaired_quality,
         corrupted_freshness,
         repaired_freshness,
+        lineage_evidence,
+        case_evidence,
     )
     print(
         "Corruption flow complete: "

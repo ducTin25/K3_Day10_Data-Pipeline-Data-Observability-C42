@@ -36,4 +36,7 @@ def test_corrupt_clean_dataframe(tmp_path) -> None:
     log_data = json.loads(log_path.read_text(encoding="utf-8"))
     assert log_data["initial_rows"] == 6
     assert len(log_data["steps"]) > 0
+    for step in log_data["steps"]:
+        assert {"parameter", "before_count", "after_count", "changes"}.issubset(step)
+        assert all({"paper_id", "before", "after"}.issubset(change) for change in step["changes"])
     assert "text_for_embedding" in corrupted_df.columns
