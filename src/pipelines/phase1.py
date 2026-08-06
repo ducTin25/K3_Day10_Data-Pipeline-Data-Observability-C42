@@ -1,15 +1,18 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 
 import pandas as pd
 
-from core.config import Settings
+from core.config import Settings, load_settings
 from core.utils import read_json
+from evaluation.metrics import evaluate_pipeline
 from evaluation.testset import build_test_set
 from ingestion.cleaning import assert_clean_contract, build_clean_dataframe, save_clean_artifacts
-from ingestion.crossref import PaperRecord
+from ingestion.crossref import PaperRecord, fetch_source_records, load_raw_records
+from observability.quality import build_freshness_report, run_data_quality_checks
+from observability.reporting import generate_phase1_report
 from retrieval.index import LocalEmbeddingIndex
 
 
@@ -55,18 +58,42 @@ def prepare_clean_handoff(
 
 
 def main() -> None:
-    """TODO(student): xay dung baseline pipeline end-to-end.
+    """Execute baseline end-to-end pipeline: raw -> clean -> index -> test set -> evaluate -> quality/freshness -> report."""
+    settings = load_settings()
 
-    Pseudo-code:
-    1. Load settings.
-    2. Load hoac fetch raw records.
-    3. Clean data.
-    4. Save clean CSV/JSON.
-    5. Build Chroma index.
-    6. Tao hoac load evaluation set.
-    7. Evaluate.
-    8. Run quality checks va freshness report.
-    9. Tao markdown report.
-    10. Co the demo agent tren vai sample question.
-    """
-    raise NotImplementedError("Student task: implement phase1 pipeline.")
+    if settings.refresh_source or not settings.paths.raw_records_json.exists():
+        records = fetch_source_records(settings)
+    else:
+        records = load_raw_records(settings.paths.raw_records_json)
+
+    run_dt = datetime.now(UTC)
+    handoff = prepare_clean_handoff(records, settings, run_dt)
+
+    bundle = evaluate_pipeline(
+        settings=settings,
+        index=handoff.index,
+        test_set_path=settings.paths.eval_testset,
+        metrics_output_path=settings.paths.baseline_metrics,
+        answers_output_path=settings.paths.baseline_answers,
+    )
+
+    quality_report = run_data_quality_checks(handoff.dataframe, settings, "baseline")
+    freshness_report = build_freshness_report(handoff.dataframe, settings, settings.paths.freshness_report)
+
+    source_summary = {
+        "source_api": settings.source_api,
+        "source_query": settings.source_query,
+        "raw_record_count": len(records),
+        "clean_record_count": len(handoff.dataframe),
+    }
+
+    generate_phase1_report(
+        report_path=settings.paths.baseline_report,
+        source_summary=source_summary,
+        metrics=bundle.summary,
+        quality=quality_report,
+        freshness=freshness_report,
+    )
+
+    print("Phase 1 Baseline Pipeline completed successfully!")
+
