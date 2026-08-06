@@ -16,6 +16,8 @@ class Paths:
     raw_records_json: Path
     raw_lineage_report: Path
     raw_handoff_markdown: Path
+    paper_lineage_evidence: Path
+    paper_lineage_handoff: Path
     clean_csv: Path
     clean_json: Path
     chroma_dir: Path
@@ -86,6 +88,8 @@ def load_settings(project_dir: Path | None = None) -> Settings:
         raw_records_json=data_dir / "raw" / "crossref_records.json",
         raw_lineage_report=data_dir / "raw" / "crossref_lineage_report.json",
         raw_handoff_markdown=data_dir / "raw" / "crossref_handoff.md",
+        paper_lineage_evidence=data_dir / "raw" / "paper_lineage_evidence.json",
+        paper_lineage_handoff=data_dir / "raw" / "paper_lineage_evidence.md",
         clean_csv=data_dir / "clean" / "papers_clean.csv",
         clean_json=data_dir / "clean" / "papers_clean.json",
         chroma_dir=data_dir / "chroma",

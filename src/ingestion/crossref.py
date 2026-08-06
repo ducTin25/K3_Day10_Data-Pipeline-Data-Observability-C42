@@ -4,6 +4,7 @@ from collections import Counter
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
+import hashlib
 import json
 from pathlib import Path
 import time
@@ -222,6 +223,145 @@ def write_raw_lineage_handoff(settings: Settings) -> dict[str, Any]:
     return report
 
 
+def trace_paper_lineage(settings: Settings, paper_id: str) -> dict[str, Any]:
+    """Trace one DOI through frozen raw, clean, manifest, and Chroma artifacts.
+
+    This function only reads local artifacts.  It deliberately does not call
+    Crossref, so the baseline source cannot be refreshed while investigating a
+    retrieval or answer failure.
+    """
+    canonical_id = _canonical_doi(paper_id)
+    if not canonical_id:
+        raise ValueError("paper_id must be a non-empty DOI.")
+
+    raw_payload = read_json(settings.paths.raw_api_response)
+    raw_records = load_raw_records(settings.paths.raw_records_json)
+    clean_rows = _read_json_list(settings.paths.clean_json, "Clean dataset")
+    manifest = read_json(settings.paths.embeddings_json)
+    if not isinstance(manifest, dict) or not isinstance(manifest.get("documents"), list):
+        raise ValueError("Embedding manifest must contain a documents list.")
+
+    raw_item = _find_raw_item(raw_payload, canonical_id)
+    raw_record = next((record for record in raw_records if record.paper_id == canonical_id), None)
+    clean_row = next((row for row in clean_rows if _canonical_doi(row.get("paper_id")) == canonical_id), None)
+    manifest_document = next(
+        (document for document in manifest["documents"] if _canonical_doi(document.get("paper_id")) == canonical_id),
+        None,
+    )
+    chroma_result = _read_chroma_record(settings, manifest, canonical_id)
+    chroma_metadata = chroma_result.get("metadata")
+    chroma_document = chroma_result.get("document")
+
+    expected_metadata = _index_metadata_from_clean_row(clean_row)
+    metadata_mismatches = {
+        field: {"clean": expected, "index": chroma_metadata.get(field) if chroma_metadata else None}
+        for field, expected in expected_metadata.items()
+        if not chroma_metadata or not _metadata_values_match(field, expected, chroma_metadata.get(field))
+    }
+    manifest_metadata = manifest_document.get("metadata") if isinstance(manifest_document, dict) else None
+    manifest_metadata_mismatches = {
+        field: {"clean": expected, "manifest": manifest_metadata.get(field) if manifest_metadata else None}
+        for field, expected in expected_metadata.items()
+        if not manifest_metadata or not _metadata_values_match(field, expected, manifest_metadata.get(field))
+    }
+    issues = []
+    for layer, value in (
+        ("raw API response", raw_item),
+        ("raw PaperRecord snapshot", raw_record),
+        ("clean dataset", clean_row),
+        ("embedding manifest", manifest_document),
+        ("Chroma metadata", chroma_metadata),
+    ):
+        if value is None:
+            issues.append(f"Missing {canonical_id} in {layer}.")
+    if manifest_document and clean_row and not _content_values_match(
+        manifest_document.get("content"), clean_row.get("text_for_embedding")
+    ):
+        issues.append("Embedding manifest content differs from clean text_for_embedding.")
+    if chroma_document is not None and clean_row and not _content_values_match(
+        chroma_document, clean_row.get("text_for_embedding")
+    ):
+        issues.append("Chroma document differs from clean text_for_embedding.")
+    if manifest_metadata_mismatches:
+        issues.append("Embedding manifest metadata differs from the clean dataset.")
+    if metadata_mismatches:
+        issues.append("Chroma metadata differs from the clean dataset.")
+
+    return {
+        "paper_id": canonical_id,
+        "source_refreshed_during_trace": False,
+        "snapshot_sha256": {
+            "raw_api_response": _sha256(settings.paths.raw_api_response),
+            "raw_records": _sha256(settings.paths.raw_records_json),
+            "clean_dataset": _sha256(settings.paths.clean_json),
+            "embedding_manifest": _sha256(settings.paths.embeddings_json),
+        },
+        "artifact_paths": {
+            "raw_api_response": str(settings.paths.raw_api_response),
+            "raw_records": str(settings.paths.raw_records_json),
+            "clean_dataset": str(settings.paths.clean_json),
+            "embedding_manifest": str(settings.paths.embeddings_json),
+            "chroma_dir": str(settings.paths.chroma_dir),
+        },
+        "layer_presence": {
+            "raw_api_response": raw_item is not None,
+            "raw_records": raw_record is not None,
+            "clean_dataset": clean_row is not None,
+            "embedding_manifest": manifest_document is not None,
+            "chroma_metadata": chroma_metadata is not None,
+        },
+        "source_evidence": _source_evidence(raw_item),
+        "raw_record": asdict(raw_record) if raw_record else None,
+        "clean_record": clean_row,
+        "index_evidence": {
+            "collection_name": manifest.get("collection_name"),
+            "manifest_document": manifest_document,
+            "chroma_metadata": chroma_metadata,
+            "chroma_document_matches_clean": _content_values_match(chroma_document, clean_row.get("text_for_embedding"))
+            if clean_row
+            else False,
+            "manifest_metadata_mismatches": manifest_metadata_mismatches,
+            "metadata_mismatches": metadata_mismatches,
+        },
+        "trace_passed": not issues,
+        "issues": issues,
+        "investigation_note": (
+            "When an evaluator or agent answer is wrong, compare its retrieved_doc_ids or cited paper_id "
+            "with this report before attributing the failure to the source data."
+        ),
+    }
+
+
+def write_paper_lineage_evidence(settings: Settings, paper_id: str) -> dict[str, Any]:
+    """Write the CP2 evidence package for a stable paper_id without refreshing source."""
+    evidence = trace_paper_lineage(settings, paper_id)
+    write_json(settings.paths.paper_lineage_evidence, evidence)
+    status = "PASSED" if evidence["trace_passed"] else "FAILED"
+    issues = evidence["issues"] or ["None"]
+    handoff = "\n".join(
+        [
+            "# Paper lineage evidence",
+            "",
+            f"- Status: **{status}**",
+            f"- `paper_id`: `{evidence['paper_id']}`",
+            "- Source refresh during trace: `False`",
+            f"- Evidence JSON: `{settings.paths.paper_lineage_evidence}`",
+            "- Use this package to inspect a wrong evaluator/agent answer from index metadata back to Crossref source evidence.",
+            "",
+            "## Layer presence",
+            "",
+            *[f"- {layer}: `{present}`" for layer, present in evidence["layer_presence"].items()],
+            "",
+            "## Issues",
+            "",
+            *(f"- {issue}" for issue in issues),
+            "",
+        ]
+    )
+    write_text(settings.paths.paper_lineage_handoff, handoff)
+    return evidence
+
+
 def _get_with_retry(params: dict[str, Any]) -> requests.Response:
     for attempt in range(MAX_RETRIES + 1):
         response = requests.get(CROSSREF_API_URL, params=params, timeout=30)
@@ -260,6 +400,81 @@ def _canonical_doi(value: object) -> str:
 
 def _empty_field_count(records: list[PaperRecord], field: str) -> int:
     return sum(not getattr(record, field) for record in records)
+
+
+def _read_json_list(path: Path, label: str) -> list[dict[str, Any]]:
+    payload = read_json(path)
+    if not isinstance(payload, list) or any(not isinstance(item, dict) for item in payload):
+        raise ValueError(f"{label} must be a JSON list of objects: {path}")
+    return payload
+
+
+def _find_raw_item(payload: object, paper_id: str) -> dict[str, Any] | None:
+    if not isinstance(payload, dict):
+        return None
+    message = payload.get("message")
+    items = message.get("items") if isinstance(message, dict) else None
+    if not isinstance(items, list):
+        return None
+    return next(
+        (item for item in items if isinstance(item, dict) and _canonical_doi(item.get("DOI")) == paper_id),
+        None,
+    )
+
+
+def _read_chroma_record(settings: Settings, manifest: dict[str, Any], paper_id: str) -> dict[str, Any]:
+    import chromadb
+
+    collection_name = manifest.get("collection_name")
+    if not isinstance(collection_name, str) or not collection_name:
+        raise ValueError("Embedding manifest has no collection_name.")
+    collection = chromadb.PersistentClient(path=str(settings.paths.chroma_dir)).get_collection(collection_name)
+    result = collection.get(where={"paper_id": paper_id}, include=["metadatas", "documents"])
+    metadatas = result.get("metadatas", [])
+    documents = result.get("documents", [])
+    return {
+        "metadata": dict(metadatas[0]) if metadatas else None,
+        "document": str(documents[0]) if documents else None,
+    }
+
+
+def _index_metadata_from_clean_row(clean_row: dict[str, Any] | None) -> dict[str, Any]:
+    if clean_row is None:
+        return {}
+    fields = ("paper_id", "title", "published", "authors_joined", "categories_joined", "summary", "abs_url", "pdf_url")
+    return {field: clean_row.get(field, "") for field in fields}
+
+
+def _source_evidence(raw_item: dict[str, Any] | None) -> dict[str, Any] | None:
+    if raw_item is None:
+        return None
+    fields = ("DOI", "title", "abstract", "author", "subject", "published-print", "published-online", "issued", "URL", "link")
+    return {field: raw_item.get(field) for field in fields if field in raw_item}
+
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _content_values_match(left: object, right: object) -> bool:
+    return _normalise_text(left) == _normalise_text(right)
+
+
+def _metadata_values_match(field: str, left: object, right: object) -> bool:
+    optional_empty_fields = {"categories_joined", "pdf_url"}
+    if field in optional_empty_fields and _is_empty_value(left) and _is_empty_value(right):
+        return True
+    return _normalise_text(left) == _normalise_text(right)
+
+
+def _normalise_text(value: object) -> str:
+    return value.replace("\r\n", "\n") if isinstance(value, str) else str(value)
+
+
+def _is_empty_value(value: object) -> bool:
+    if value is None or value == "":
+        return True
+    return isinstance(value, float) and value != value
 
 
 def _first_text(value: object) -> str:
