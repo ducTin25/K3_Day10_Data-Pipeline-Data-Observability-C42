@@ -2,7 +2,15 @@ from datetime import datetime
 
 import pandas as pd
 
-from ingestion.cleaning import build_clean_dataframe, save_clean_artifacts, strip_html_tags
+from ingestion.cleaning import (
+    CLEAN_COLUMNS,
+    CleanContractError,
+    assert_clean_contract,
+    build_clean_dataframe,
+    save_clean_artifacts,
+    strip_html_tags,
+    validate_clean_contract,
+)
 from ingestion.crossref import PaperRecord
 
 
@@ -88,3 +96,37 @@ def test_save_clean_artifacts(tmp_path) -> None:
     df_read = pd.read_csv(csv_path)
     assert len(df_read) == 1
     assert df_read.iloc[0]["paper_id"] == "10.1000/clean.1"
+
+
+def test_clean_contract_passes_for_stable_schema() -> None:
+    df = build_clean_dataframe(_sample_records(), datetime(2026, 8, 6))
+
+    report = assert_clean_contract(df)
+
+    assert report["passed"] is True
+    assert report["columns"] == list(CLEAN_COLUMNS)
+
+
+def test_clean_contract_blocks_empty_embedding_text() -> None:
+    df = build_clean_dataframe(_sample_records(), datetime(2026, 8, 6))
+    df.loc[0, "text_for_embedding"] = ""
+
+    report = validate_clean_contract(df)
+
+    assert report["passed"] is False
+    assert report["checks"]["text_for_embedding_not_blank"]["invalid_rows"] == 1
+    try:
+        assert_clean_contract(df)
+    except CleanContractError as exc:
+        assert "test-set/index handoff was stopped" in str(exc)
+    else:
+        raise AssertionError("Invalid clean data was allowed through the handoff gate.")
+
+
+def test_all_filtered_records_keep_the_clean_schema() -> None:
+    record = _sample_records()[1]
+
+    df = build_clean_dataframe([record], datetime(2026, 8, 6))
+
+    assert df.empty
+    assert tuple(df.columns) == CLEAN_COLUMNS
