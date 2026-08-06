@@ -7,3 +7,4 @@ lab/
 **/__pycache__/
 .vscode/
 .idea
+.agents/

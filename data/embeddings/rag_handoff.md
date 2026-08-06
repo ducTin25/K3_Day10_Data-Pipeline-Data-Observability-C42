@@ -47,12 +47,14 @@ Nguồn: `data/clean/papers_clean.csv` / `papers_clean.json` (24 records, do Vai
 - Dọn 2 folder Chroma mồ côi (`cb674a12-...` của bản build lỗi cũ, `0e31576b-...` của lần build nháp) — đã xác nhận qua bảng `segments` trong `chroma.sqlite3` rằng folder đang thật sự dùng là `6e3c438e-8b89-45c8-ad68-742e914cc6df` trước khi xoá.
 
 **Test semantic_search** (2 query đã chuẩn bị từ CP0), trả về kết quả có điểm số và nguồn hợp lý:
+
 - "What are recent papers about retrieval augmented generation for agents?" -> top1 `10.63646/kpqm1958` (score 0.60)
 - "How do LLM agents use retrieval tools?" -> top1 `10.70121/001c.158711` (score 0.48)
 
 **Test lookup** (exact match): theo `paper_id` -> tìm thấy; theo title chính xác -> tìm thấy; giá trị không tồn tại -> trả `None` đúng như kỳ vọng.
 
 **Test agent** (dùng câu hỏi thật `eval-002` từ `data/eval/test_set.json`, loại `authors`):
+
 - Câu hỏi: "Who authored the paper 'JADE-Plus...'?"
 - Ground truth: `Soroush Baseri Saadi, Jonas Ver Berne, Rocharles Cavalcante Fontenele, Peter Claes, Reinhilde Jacobs`
 - Agent trả lời đúng đủ cả 5 tác giả, đã gọi tool (`lookup_paper`/`semantic_search_papers`) trước khi trả lời theo đúng system prompt, không bịa ngoài corpus.
@@ -74,4 +76,4 @@ Không hand-merge JSON/binary sinh ra từ code — xoá sạch toàn bộ `data
 - [x] CP0: đọc contract, chốt embedding model/collection naming/metadata, chuẩn bị smoke query
 - [x] CP1: xác minh schema + chất lượng `text_for_embedding` trên dữ liệu clean thật, phát hiện và ghi nhận embeddings manifest lỗi cần rebuild
 - [x] CP2: build `papers-baseline` đầy đủ (24/24 doc), smoke test semantic search + lookup + agent đều pass
-- [ ] CP3+: chờ baseline pipeline (`phase1.py`, do lead phụ trách) chạy end-to-end để có `baseline_metrics.json` chính thức
+- [x] CP3: baseline pipeline chạy end-to-end; `papers-baseline` có 24/24 documents và `data/results/baseline_metrics.json` đã được tạo
