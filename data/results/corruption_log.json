@@ -1,0 +1,53 @@
+{
+  "timestamp": "2026-08-06T03:56:02.512955Z",
+  "initial_rows": 24,
+  "final_rows": 23,
+  "steps": [
+    {
+      "step": "drop_latest_records",
+      "count": 2,
+      "dropped_paper_ids": [
+        "10.1111/exsy.70341",
+        "10.2118/234689-pa"
+      ]
+    },
+    {
+      "step": "blank_summary",
+      "count": 2,
+      "affected_paper_ids": [
+        "10.1007/s10278-026-02086-9",
+        "10.21203/rs.3.rs-10178277/v1"
+      ]
+    },
+    {
+      "step": "inject_noise",
+      "count": 2,
+      "affected_paper_ids": [
+        "10.2196/preprints.106157",
+        "10.3390/buildings16132637"
+      ]
+    },
+    {
+      "step": "truncate_title",
+      "count": 2,
+      "affected_paper_ids": [
+        "10.3390/buildings16132637",
+        "10.21079/11681/50309"
+      ]
+    },
+    {
+      "step": "old_published_date",
+      "count": 1,
+      "affected_paper_ids": [
+        "10.21203/rs.3.rs-10178277/v1"
+      ]
+    },
+    {
+      "step": "add_duplicate_rows",
+      "count": 1,
+      "duplicated_paper_ids": [
+        "10.1007/s10278-026-02086-9"
+      ]
+    }
+  ]
+}

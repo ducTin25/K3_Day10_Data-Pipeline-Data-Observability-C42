@@ -1,0 +1,36 @@
+{
+  "report_name": "baseline",
+  "generated_at": "2026-08-06T03:56:55.546090+00:00",
+  "total_rows": 24,
+  "passed": true,
+  "checks": {
+    "row_count": {
+      "passed": true,
+      "value": 24,
+      "expected": "> 0"
+    },
+    "paper_id_not_null": {
+      "passed": true,
+      "invalid_rows": 0
+    },
+    "paper_id_unique": {
+      "passed": true,
+      "duplicate_rows": 0
+    },
+    "title_not_null": {
+      "passed": true,
+      "invalid_rows": 0
+    },
+    "summary_min_length": {
+      "passed": true,
+      "min_chars": 40,
+      "invalid_rows": 0
+    },
+    "freshness": {
+      "passed": true,
+      "threshold_days": 180,
+      "stale_rows": 0,
+      "missing_age_days": 0
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "backend": "chroma",
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "persist_path": "C:\\Users\\Admin\\Downloads\\CodeLab10\\K3_Day10_Data-Pipeline-Data-Observability-C42\\data\\chroma",
+  "collection_name": "papers-baseline",
+  "documents": [
+    {
+      "record_id": "10.1000/182::0",
+      "paper_id": "10.1000/182",
+      "title": "Test Paper Title",
+      "content": "Test Paper Title. Summary of the test paper.",
+      "metadata": {
+        "paper_id": "10.1000/182",
+        "title": "Test Paper Title",
+        "published": "2026-01-01",
+        "authors_joined": "John Doe, Jane Smith",
+        "categories_joined": "cs.AI",
+        "summary": "Summary of the test paper.",
+        "abs_url": "https://doi.org/10.1000/182",
+        "pdf_url": "https://doi.org/10.1000/182"
+      }
+    }
+  ]
+}
