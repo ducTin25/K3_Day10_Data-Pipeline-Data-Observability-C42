@@ -19,8 +19,8 @@
 | samples | 24 |
 | retrieval_hit_rate | 1.000 |
 | mean_token_f1 | 0.575 |
-| judge_accuracy | 0.500 |
-| mean_judge_score | 3.167 |
+| judge_accuracy | 0.542 |
+| mean_judge_score | 3.083 |
 
 ## Data quality
 
