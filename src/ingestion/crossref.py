@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from collections import Counter
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
+import json
 from pathlib import Path
 import time
 from typing import Any
@@ -10,7 +12,7 @@ from typing import Any
 import requests
 
 from core.config import Settings
-from core.utils import normalize_whitespace, read_json, write_json
+from core.utils import normalize_whitespace, read_json, write_json, write_text
 
 
 CROSSREF_API_URL = "https://api.crossref.org/works"
@@ -131,6 +133,95 @@ def load_raw_records(path: Path) -> list[PaperRecord]:
     return records
 
 
+def audit_raw_lineage(settings: Settings) -> dict[str, Any]:
+    """Verify that a Crossref response and its parsed snapshot are traceable.
+
+    The report is intentionally based only on saved artifacts, so it can be
+    rerun offline before a repair flow without calling Crossref again.
+    """
+    raw_payload = read_json(settings.paths.raw_api_response)
+    if not isinstance(raw_payload, dict):
+        raise ValueError("Raw Crossref response must be a JSON object.")
+    message = raw_payload.get("message")
+    if not isinstance(message, dict) or not isinstance(message.get("items"), list):
+        raise ValueError("Raw Crossref response does not contain message.items.")
+
+    raw_items = message["items"]
+    reparsed_records = parse_crossref_payload(raw_payload)
+    snapshot_records = load_raw_records(settings.paths.raw_records_json)
+    raw_doi_ids = [_canonical_doi(item.get("DOI")) for item in raw_items if isinstance(item, dict)]
+    raw_doi_ids = [doi for doi in raw_doi_ids if doi]
+    snapshot_ids = [record.paper_id for record in snapshot_records]
+    required_fields = ("paper_id", "title", "summary", "authors", "published")
+    optional_fields = ("categories", "primary_category", "updated", "abs_url", "pdf_url", "comment")
+    required_empty_counts = {field: _empty_field_count(snapshot_records, field) for field in required_fields}
+    optional_empty_counts = {field: _empty_field_count(snapshot_records, field) for field in optional_fields}
+    raw_id_set = set(raw_doi_ids)
+    snapshot_id_set = set(snapshot_ids)
+
+    report = {
+        "source": "Crossref REST API",
+        "raw_response_path": str(settings.paths.raw_api_response),
+        "raw_records_path": str(settings.paths.raw_records_json),
+        "raw_item_count": len(raw_items),
+        "reparsed_record_count": len(reparsed_records),
+        "snapshot_record_count": len(snapshot_records),
+        "snapshot_matches_reparse": snapshot_records == reparsed_records,
+        "raw_items_missing_doi": len(raw_items) - len(raw_doi_ids),
+        "duplicate_snapshot_paper_ids": sorted(id_ for id_, count in Counter(snapshot_ids).items() if count > 1),
+        "raw_doi_ids_not_in_snapshot": sorted(raw_id_set - snapshot_id_set),
+        "snapshot_paper_ids_not_in_raw": sorted(snapshot_id_set - raw_id_set),
+        "required_field_empty_counts": required_empty_counts,
+        "optional_field_empty_counts": optional_empty_counts,
+        "cleaning_input_ready": (
+            snapshot_records == reparsed_records
+            and not (raw_id_set - snapshot_id_set)
+            and not (snapshot_id_set - raw_id_set)
+            and not any(count > 1 for count in Counter(snapshot_ids).values())
+        ),
+        "records_with_empty_cleaning_fields": required_empty_counts,
+        "sample_record": asdict(snapshot_records[0]) if snapshot_records else None,
+        "notes": [
+            "paper_id is the canonicalized Crossref DOI (trimmed and lowercased).",
+            "HTML/JATS content in summary is preserved in the raw snapshot; cleaning removes markup.",
+            "Empty title, summary, authors, or published values are retained in raw records so cleaning can apply its filtering rules.",
+            "categories, updated, pdf_url, and comment are optional Crossref metadata.",
+        ],
+    }
+    return report
+
+
+def write_raw_lineage_handoff(settings: Settings) -> dict[str, Any]:
+    """Persist CP1 lineage evidence and a concise handoff for downstream roles."""
+    report = audit_raw_lineage(settings)
+    write_json(settings.paths.raw_lineage_report, report)
+    sample = report["sample_record"]
+    sample_json = "null" if sample is None else json.dumps(sample, ensure_ascii=False, indent=2)
+    handoff = "\n".join(
+        [
+            "# Crossref raw-lineage handoff",
+            "",
+            f"- Raw API snapshot: `{settings.paths.raw_api_response}`",
+            f"- Parsed PaperRecord snapshot: `{settings.paths.raw_records_json}`",
+            f"- Lineage audit: `{settings.paths.raw_lineage_report}`",
+            f"- Snapshot matches reparse: `{report['snapshot_matches_reparse']}`",
+            f"- Cleaning input ready: `{report['cleaning_input_ready']}`",
+            "- `paper_id` is the canonicalized DOI; use it as the stable key for repair and comparison.",
+            "- `summary` may contain JATS/HTML; strip markup only in cleaning, never in raw artifacts.",
+            "- Empty categories are valid optional source metadata; do not infer categories.",
+            "",
+            "## Sample PaperRecord",
+            "",
+            "```json",
+            sample_json,
+            "```",
+            "",
+        ]
+    )
+    write_text(settings.paths.raw_handoff_markdown, handoff)
+    return report
+
+
 def _get_with_retry(params: dict[str, Any]) -> requests.Response:
     for attempt in range(MAX_RETRIES + 1):
         response = requests.get(CROSSREF_API_URL, params=params, timeout=30)
@@ -161,6 +252,14 @@ def _retry_delay_seconds(response: requests.Response, attempt: int) -> float:
 
 def _text(value: object) -> str:
     return normalize_whitespace(value) if isinstance(value, str) else ""
+
+
+def _canonical_doi(value: object) -> str:
+    return _text(value).lower()
+
+
+def _empty_field_count(records: list[PaperRecord], field: str) -> int:
+    return sum(not getattr(record, field) for record in records)
 
 
 def _first_text(value: object) -> str:
