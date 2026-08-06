@@ -9,6 +9,30 @@ from core.utils import compact_join, normalize_whitespace, write_csv, write_json
 from ingestion.crossref import PaperRecord
 
 
+CLEAN_COLUMNS = (
+    "paper_id",
+    "title",
+    "summary",
+    "authors",
+    "categories",
+    "primary_category",
+    "published",
+    "updated",
+    "abs_url",
+    "pdf_url",
+    "comment",
+    "authors_joined",
+    "categories_joined",
+    "summary_chars",
+    "age_days",
+    "text_for_embedding",
+)
+
+
+class CleanContractError(ValueError):
+    """Raised before test-set/index work when clean data is not safe to hand off."""
+
+
 def strip_html_tags(text: str) -> str:
     """Remove HTML/JATS tags and normalize whitespace."""
     if not text:
@@ -31,26 +55,7 @@ def build_clean_dataframe(
     5. Sort dataframe by published date descending and return.
     """
     if not records:
-        return pd.DataFrame(
-            columns=[
-                "paper_id",
-                "title",
-                "summary",
-                "authors",
-                "categories",
-                "primary_category",
-                "published",
-                "updated",
-                "abs_url",
-                "pdf_url",
-                "comment",
-                "authors_joined",
-                "categories_joined",
-                "summary_chars",
-                "age_days",
-                "text_for_embedding",
-            ]
-        )
+        return pd.DataFrame(columns=CLEAN_COLUMNS)
 
     cleaned_rows: list[dict[str, Any]] = []
     run_dt = run_date.date() if isinstance(run_date, datetime) else run_date
@@ -118,7 +123,7 @@ def build_clean_dataframe(
 
     df = pd.DataFrame(cleaned_rows)
     if df.empty:
-        return df
+        return pd.DataFrame(columns=CLEAN_COLUMNS)
 
     # Deduplicate by stable paper_id
     df = df.drop_duplicates(subset=["paper_id"], keep="first")
@@ -126,6 +131,71 @@ def build_clean_dataframe(
     # Sort by published descending, paper_id ascending
     df = df.sort_values(by=["published", "paper_id"], ascending=[False, True]).reset_index(drop=True)
     return df
+
+
+def validate_clean_contract(df: pd.DataFrame) -> dict[str, Any]:
+    """Validate the single schema consumed by both test-set and index stages."""
+    missing_columns = sorted(set(CLEAN_COLUMNS) - set(df.columns))
+
+    def blank_count(column: str) -> int:
+        if column not in df.columns:
+            return len(df)
+        values = df[column]
+        return int((values.isna() | values.astype(str).str.strip().eq("")).sum())
+
+    paper_ids = df["paper_id"] if "paper_id" in df.columns else pd.Series(dtype="object")
+    published = (
+        pd.to_datetime(df["published"], format="%Y-%m-%d", errors="coerce")
+        if "published" in df.columns
+        else pd.Series(dtype="datetime64[ns]")
+    )
+    age_days = (
+        pd.to_numeric(df["age_days"], errors="coerce")
+        if "age_days" in df.columns
+        else pd.Series(dtype="float64")
+    )
+    checks = {
+        "non_empty": {"passed": len(df) > 0, "row_count": len(df)},
+        "schema": {"passed": not missing_columns, "missing_columns": missing_columns},
+        "paper_id_not_blank": {"passed": blank_count("paper_id") == 0, "invalid_rows": blank_count("paper_id")},
+        "paper_id_unique": {
+            "passed": not paper_ids.duplicated().any(),
+            "duplicate_rows": int(paper_ids.duplicated(keep=False).sum()),
+        },
+        "title_not_blank": {"passed": blank_count("title") == 0, "invalid_rows": blank_count("title")},
+        "summary_not_blank": {"passed": blank_count("summary") == 0, "invalid_rows": blank_count("summary")},
+        "text_for_embedding_not_blank": {
+            "passed": blank_count("text_for_embedding") == 0,
+            "invalid_rows": blank_count("text_for_embedding"),
+        },
+        "published_valid": {
+            "passed": len(published) == len(df) and not published.isna().any(),
+            "invalid_rows": int(published.isna().sum()),
+        },
+        "age_days_valid": {
+            "passed": len(age_days) == len(df) and not age_days.isna().any() and not (age_days < 0).any(),
+            "invalid_rows": int(age_days.isna().sum() + (age_days < 0).sum()),
+        },
+    }
+    return {
+        "contract_version": 1,
+        "columns": list(CLEAN_COLUMNS),
+        "row_count": len(df),
+        "passed": all(check["passed"] for check in checks.values()),
+        "checks": checks,
+    }
+
+
+def assert_clean_contract(df: pd.DataFrame) -> dict[str, Any]:
+    """Return the contract report or stop the downstream handoff."""
+    report = validate_clean_contract(df)
+    if not report["passed"]:
+        failed = [name for name, check in report["checks"].items() if not check["passed"]]
+        raise CleanContractError(
+            "Clean contract failed; test-set/index handoff was stopped. "
+            f"Failed checks: {', '.join(failed)}"
+        )
+    return report
 
 
 def save_clean_artifacts(df: pd.DataFrame, settings) -> tuple[Path, Path]:

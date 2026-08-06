@@ -5,6 +5,7 @@ from typing import Any
 import pandas as pd
 
 from core.utils import normalize_whitespace, write_json
+from ingestion.cleaning import assert_clean_contract
 
 
 def build_test_set(df: pd.DataFrame, output_path) -> list[dict[str, Any]]:
@@ -13,10 +14,7 @@ def build_test_set(df: pd.DataFrame, output_path) -> list[dict[str, Any]]:
     Every ground-truth document ID comes directly from ``paper_id`` so that
     retrieval-hit scoring is always aligned with the indexed clean corpus.
     """
-    required = {"paper_id", "title", "summary", "published"}
-    missing = required - set(df.columns)
-    if missing:
-        raise ValueError(f"Clean dataframe is missing columns: {', '.join(sorted(missing))}")
+    assert_clean_contract(df)
 
     def as_text(value: Any) -> str:
         if value is None or (not isinstance(value, (list, tuple, set)) and pd.isna(value)):
