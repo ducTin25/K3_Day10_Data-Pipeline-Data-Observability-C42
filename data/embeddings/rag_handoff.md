@@ -89,10 +89,33 @@ Việc riêng của vai trò rag ở CP3 không phụ thuộc ai (tách biệt v
 
 Pass-criteria CP3 cấp team (`baseline_metrics.json`, `answers`, quality/freshness, `phase1_report.md`) phụ thuộc vào Vai trò 1 (lead) implement + chạy `uv run python script/run_phase1.py`. Tại thời điểm ghi nhận, `src/pipelines/phase1.py::main()` **vẫn còn `NotImplementedError`** — 3 việc riêng của rag ở trên không bị chặn, nhưng checkpoint chưa "xong" ở cấp team. Sau khi lead chạy `phase1.py` (có thể tự rebuild lại index), cần re-run script xác nhận CP2/CP3 để đảm bảo `papers-baseline` vẫn khớp.
 
+## CHECKPOINT 4 — Nghỉ 15 phút; lưu ví dụ query baseline để đối chiếu
+
+Không phụ thuộc ai. Chốt lại bộ ví dụ baseline dùng chung cho CP5 (corrupted) và CP6 (repaired) — chạy lại đúng các query này trên `papers-corrupted`/`papers-repaired` sau này để so sánh, không đổi query giữa các trạng thái.
+
+**Semantic search** — Query: `"What are recent papers about retrieval augmented generation for agents?"`
+
+| Rank | score | paper_id | title |
+|---|---|---|---|
+| 1 | 0.6037 | `10.63646/kpqm1958` | The Age of Autonomous Agents: A Bibliometric Review of Agentic AI Architectures... |
+| 2 | 0.5383 | `10.32473/flairs.39.1.141782` | An Exploratory Study of Agentic Retrieval Augmented Generation for Mental Health... |
+| 3 | 0.5184 | `10.70121/001c.158711` | The Role of Retrieval-Augmented Generation in Improving Factual Accuracy for Medical... |
+
+**Exact lookup** — `paper_id = "10.1111/exsy.70341"` -> found, title "Hi‐RAG: A Hierarchical Retrieval‐Augmented Generation Framework...", authors "Wei Tian, Yuhao Zhou", published `2026-08-01`.
+
+**Agent (trong corpus)** — Q: `"Who authored the paper 'JADE-Plus...'?"` -> đúng đủ 5 tác giả, khớp `ground_truth` của `eval-002` trong `test_set.json`.
+
+**Agent (ngoài corpus, guard)** — Q: `"What is the capital city of France?"` -> `"The indexed corpus does not cover the question about the capital city of France."` (đúng sau khi sửa system prompt ở CP3).
+
+**Baseline metrics tham chiếu** (`data/results/baseline_metrics.json`, sau lần evaluator chạy cuối): `retrieval_hit_rate=1.0`, `mean_token_f1=0.575`, `judge_accuracy=0.542`, `mean_judge_score=3.08`.
+
+Nếu ở CP5/CP6 chạy lại đúng các query trên mà `paper_id`/score đổi khác hẳn, hoặc agent bắt đầu bịa đáp án — đó là bằng chứng trực tiếp cho thấy corruption ảnh hưởng tới RAG.
+
 ## Trạng thái
 
 - [x] CP0: đọc contract, chốt embedding model/collection naming/metadata, chuẩn bị smoke query
 - [x] CP1: xác minh schema + chất lượng `text_for_embedding` trên dữ liệu clean thật, phát hiện và ghi nhận embeddings manifest lỗi cần rebuild
 - [x] CP2: build `papers-baseline` đầy đủ (24/24 doc), smoke test semantic search + lookup + agent đều pass
-- [x] CP3: xác nhận baseline khớp clean data, demo search/lookup, phát hiện + sửa lỗi agent trả lời ngoài corpus. Lead đã chạy xong `phase1.py` end-to-end: `data/results/baseline_metrics.json` (`retrieval_hit_rate=1.0`, `mean_token_f1=0.575`, `judge_accuracy=0.5`, `mean_judge_score=3.17`), `baseline_answers.json` và `data/reports/phase1_report.md` đã tồn tại.
-- [ ] CP4+: re-verify `papers-baseline` sau khi merge/rebuild để đảm bảo vẫn khớp 24/24 record trước khi sang corruption flow
+- [x] CP3: xác nhận baseline khớp clean data, demo search/lookup, phát hiện + sửa lỗi agent trả lời ngoài corpus. Lead đã chạy xong `phase1.py` end-to-end: `data/results/baseline_metrics.json`, `baseline_answers.json` và `data/reports/phase1_report.md` đã tồn tại.
+- [x] CP4: nghỉ; đã chốt bộ ví dụ query baseline (semantic/lookup/agent) làm tham chiếu cho CP5-CP6
+- [ ] CP5+: build `papers-corrupted` sau khi Vai trò 3 tạo corrupted clean data, chạy lại đúng bộ query trên để so sánh
