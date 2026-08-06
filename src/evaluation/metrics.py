@@ -8,6 +8,7 @@ import types
 from typing import Any
 
 from datasets import Dataset
+import pandas as pd
 from pydantic import BaseModel, Field
 
 from core.config import Settings
@@ -30,9 +31,17 @@ class EvaluationBundle:
     answers: list[dict[str, Any]]
 
 
-def _token_f1(reference: str, prediction: str) -> float:
-    ref_tokens = normalize_whitespace(reference).lower().split()
-    pred_tokens = normalize_whitespace(prediction).lower().split()
+def _token_f1(reference: Any, prediction: Any) -> float:
+    """Calculate token F1 while tolerating nullable metadata values."""
+    def tokens(value: Any) -> list[str]:
+        if value is None or (not isinstance(value, (list, tuple, set)) and pd.isna(value)):
+            return []
+        if isinstance(value, (list, tuple, set)):
+            value = ", ".join(str(item) for item in value)
+        return normalize_whitespace(str(value)).lower().split()
+
+    ref_tokens = tokens(reference)
+    pred_tokens = tokens(prediction)
     if not ref_tokens or not pred_tokens:
         return 0.0
     ref_set = set(ref_tokens)
