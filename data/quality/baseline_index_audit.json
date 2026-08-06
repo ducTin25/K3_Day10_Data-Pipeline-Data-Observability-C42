@@ -1,0 +1,14 @@
+{
+  "checkpoint": "CP2",
+  "generated_at": "2026-08-06T04:32:07.555072+00:00",
+  "collection_name": "papers-baseline",
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "clean_row_count": 24,
+  "manifest_document_count": 24,
+  "chroma_document_count": 24,
+  "test_sample_count": 24,
+  "unique_ground_truth_doc_ids": 6,
+  "all_test_ids_present_in_manifest": true,
+  "missing_ground_truth_doc_ids": [],
+  "passed": true
+}
