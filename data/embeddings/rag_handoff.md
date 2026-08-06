@@ -138,4 +138,34 @@ Pass criteria CP5 cho vai trò rag: **đạt** — `papers-corrupted` build riê
 - [x] CP3: xác nhận baseline khớp clean data, demo search/lookup, phát hiện + sửa lỗi agent trả lời ngoài corpus. Lead đã chạy xong `phase1.py` end-to-end: `data/results/baseline_metrics.json`, `baseline_answers.json` và `data/reports/phase1_report.md` đã tồn tại.
 - [x] CP4: nghỉ; đã chốt bộ ví dụ query baseline (semantic/lookup/agent) làm tham chiếu cho CP5-CP6
 - [x] CP5: build `papers-corrupted` (23/23 doc) từ dữ liệu Vai trò 3 bàn giao, chứng minh được retrieval thay đổi (noise chen top-3, record bị drop mất khỏi lookup), xác nhận baseline không bị mutate
-- [ ] CP6+: build `papers-repaired` sau khi Vai trò 3 repair từ raw, chạy lại đúng bộ query để đo mức phục hồi
+- [x] CP6: build `papers-repaired` (24/24 doc), chứng minh phục hồi hoàn toàn so với baseline, agent trả lời đúng trên dữ liệu repaired, trình bày đủ 3 collection tách biệt tái lập được
+
+## CHECKPOINT 6 — Build `papers-repaired`, chứng minh phục hồi, trình bày 3 collection
+
+Nguồn: `data/clean/papers_clean_repaired.csv` (24 dòng, do Vai trò 3 repair từ raw — không sửa tay).
+
+1. **Build `papers-repaired` riêng** — `collection_name=papers-repaired`, 24/24 document, path/manifest tách biệt (`papers_embeddings_repaired.json`).
+
+2. **Chạy lại đúng query baseline (CP4) trên repaired, so với corrupted (CP5):**
+
+   | Kiểm tra | Baseline (CP4) | Corrupted (CP5) | Repaired (CP6) |
+   |---|---|---|---|
+   | Semantic search top-3 (paper_id) | `kpqm1958, flairs.39.1.141782, 001c.158711` | `kpqm1958, preprints.106157(noise), flairs...` | `kpqm1958, flairs.39.1.141782, 001c.158711` — **khớp lại y hệt baseline** |
+   | Lookup `10.1111/exsy.70341` (paper bị drop) | found=True | found=**False** | found=**True** — đã phục hồi |
+   | Summary của JADE-Plus (`10.1007/s10278-026-02086-9`, bị blank ở corrupted) | có nội dung | rỗng | **đã điền lại**, không còn rỗng |
+
+   -> Repair phục hồi retrieval về đúng trạng thái baseline trên cả 3 tiêu chí kiểm tra.
+
+3. **Agent dùng tool, trả lời đúng trên dữ liệu repaired:** hỏi lại đúng câu hỏi tác giả JADE-Plus trên `papers-repaired` -> agent gọi tool, trả lời đúng đủ 5 tác giả — record đã phục hồi nên agent trả lời chính xác dù ở CP5 (corrupted) record này vẫn còn nhưng summary rỗng.
+
+4. **Trình bày 3 collection/path tách biệt, tái lập được:**
+
+   | Trạng thái | collection_name | doc count | manifest |
+   |---|---|---|---|
+   | baseline | `papers-baseline` | 24 | `data/embeddings/papers_embeddings.json` |
+   | corrupted | `papers-corrupted` | 23 | `data/embeddings/papers_embeddings_corrupted.json` |
+   | repaired | `papers-repaired` | 24 | `data/embeddings/papers_embeddings_repaired.json` |
+
+   Cả 3 dùng chung `persist_path=data/chroma` (1 Chroma client) nhưng tách biệt hoàn toàn qua `collection_name` — không đè lẫn nhau. Tái lập bất kỳ trạng thái nào chỉ cần `LocalEmbeddingIndex.build(df, settings, embeddings_output_path=...)` từ đúng file clean tương ứng.
+
+Pass criteria CP6 cho vai trò rag: **đạt** — `papers-repaired` build riêng, chứng minh phục hồi bằng 3 tiêu chí retrieval cụ thể (không chỉ nói suông), agent hoạt động đúng trên dữ liệu repaired, demo đủ 3 collection tách biệt và tái lập được.
