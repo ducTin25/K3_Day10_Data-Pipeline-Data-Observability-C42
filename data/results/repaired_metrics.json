@@ -1,10 +1,9 @@
 {
-  "samples": 24,
-  "retrieval_hit_rate": 1.0,
-  "mean_token_f1": 0.575480003372849,
-  "judge_accuracy": 0.5416666666666666,
-  "mean_judge_score": 3.0833333333333335,
-  "ragas": {
-    "skipped": "Set RUN_RAGAS=1 to enable the slower Ragas pass."
-  }
+  "timestamp": "2026-08-06T05:37:53.334810Z",
+  "source_raw_path": "C:\\Users\\Admin\\Downloads\\CodeLab10\\K3_Day10_Data-Pipeline-Data-Observability-C42\\data\\raw\\crossref_records.json",
+  "repaired_record_count": 24,
+  "corrupted_record_count": 23,
+  "baseline_record_count": 24,
+  "recovery_status": "FULL_RECOVERY",
+  "notes": "Dataset fully reconstructed from trusted raw records snapshot."
 }
