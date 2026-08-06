@@ -35,6 +35,15 @@ def generate_phase1_report(
 
 {_metrics_table(('Baseline', metrics))}
 
+## How to read the metrics
+
+- `retrieval_hit_rate`: proportion of questions whose retrieved documents contain a ground-truth document ID.
+- `mean_token_f1`: lexical overlap between the reference answer and the generated answer; it is useful for factual fields but does not measure semantic equivalence perfectly.
+- `judge_accuracy` and `mean_judge_score`: correctness and 1--5 score from the answer judge. If the LLM judge is unavailable, the evaluation falls back to a token-F1 heuristic; inspect `baseline_answers.json` for the verdict reasoning.
+- Ragas: {_format(metrics.get('ragas', 'n/a'))}
+
+The baseline retrieval hit rate is {_format(metrics.get('retrieval_hit_rate', 'n/a'))}. {'No retrieval misses were observed in this run.' if metrics.get('retrieval_hit_rate') == 1.0 else 'Review retrieval misses in `baseline_answers.json` before comparing later runs.'}
+
 ## Data quality
 
 - Overall status: **{'PASS' if quality.get('passed') else 'FAIL'}**
