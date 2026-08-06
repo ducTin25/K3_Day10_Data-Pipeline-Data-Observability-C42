@@ -23,3 +23,27 @@
 | --- | --- | --- | ---: |
 | Corrupted | FAIL | STALE / INCOMPLETE | 1 |
 | Repaired | PASS | FRESH | 0 |
+
+## Raw-to-repair lineage
+
+- 7/7 document IDs affected by corruption are present in the frozen raw snapshot.
+- 7/7 IDs are restored exactly once in repaired data, including both records dropped from corrupted data.
+- Detailed evidence: `data/quality/corruption_comparison_audit.json`.
+
+## Representative retrieval case
+
+Question `eval-009` targets ground-truth DOI `10.1111/exsy.70341`, one of the two dropped records.
+
+| State | Collection queried | Retrieval hit | Ground-truth retrieved | Observed result |
+| --- | --- | --- | --- | --- |
+| Baseline | `papers-baseline` | Yes | Yes | Correct paper summary returned |
+| Corrupted | `papers-corrupted` | No | No | Answer came from a different retrieved document |
+| Repaired | `papers-repaired` | Yes | Yes | Correct paper summary returned again |
+
+This case proves the evaluator queried the state-specific collection and shows a concrete hit → miss → recovered-hit sequence.
+
+## Interpretation limits
+
+- All corruption scenarios run together; the aggregate metric delta cannot be attributed to one scenario without ablation.
+- Judge metrics may vary between LLM calls; this comparison uses artifacts from the same completed run.
+- Ragas remains disabled unless `RUN_RAGAS=1`.

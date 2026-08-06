@@ -16,5 +16,23 @@
     "baseline": "data/results/baseline_metrics.json",
     "corrupted": "data/results/corrupted_metrics.json",
     "repaired": "data/results/repaired_metrics.json"
+  },
+  "lineage_evidence": [
+    {"paper_id": "10.1111/exsy.70341", "present_in_raw": true, "corrupted_row_count": 0, "repaired_row_count": 1, "restored_from_raw": true},
+    {"paper_id": "10.2118/234689-pa", "present_in_raw": true, "corrupted_row_count": 0, "repaired_row_count": 1, "restored_from_raw": true},
+    {"paper_id": "10.1007/s10278-026-02086-9", "present_in_raw": true, "corrupted_row_count": 2, "repaired_row_count": 1, "restored_from_raw": true},
+    {"paper_id": "10.21203/rs.3.rs-10178277/v1", "present_in_raw": true, "corrupted_row_count": 1, "repaired_row_count": 1, "restored_from_raw": true},
+    {"paper_id": "10.2196/preprints.106157", "present_in_raw": true, "corrupted_row_count": 1, "repaired_row_count": 1, "restored_from_raw": true},
+    {"paper_id": "10.3390/buildings16132637", "present_in_raw": true, "corrupted_row_count": 1, "repaired_row_count": 1, "restored_from_raw": true},
+    {"paper_id": "10.21079/11681/50309", "present_in_raw": true, "corrupted_row_count": 1, "repaired_row_count": 1, "restored_from_raw": true}
+  ],
+  "representative_case": {
+    "sample_id": "eval-009",
+    "ground_truth_doc_ids": ["10.1111/exsy.70341"],
+    "states": {
+      "baseline": {"collection": "papers-baseline", "retrieval_hit": true, "retrieved_ground_truth": true},
+      "corrupted": {"collection": "papers-corrupted", "retrieval_hit": false, "retrieved_ground_truth": false},
+      "repaired": {"collection": "papers-repaired", "retrieval_hit": true, "retrieved_ground_truth": true}
+    }
   }
 }
